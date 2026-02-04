@@ -34,6 +34,16 @@ export const ERROR_MESSAGES = {
   // 서버 오류
   SERVER_ERROR: "서버 오류가 발생했습니다.",
   REQUEST_ERROR: "요청 처리 중 오류가 발생했습니다.",
+
+  // 여론조사 관련
+  POLL_NOT_FOUND: "여론조사를 찾을 수 없습니다.",
+  POLL_OWNER_ONLY: "여론조사의 작성자만 이 작업을 수행할 수 있습니다.",
+  POLL_NOT_ACTIVE: "투표가 진행 중이지 않습니다.",
+  POLL_ALREADY_VOTED: "이미 투표하셨습니다.",
+  POLL_OPTION_NOT_FOUND: "선택지를 찾을 수 없습니다.",
+  POLL_OPTION_INVALID: "유효하지 않은 선택지입니다.",
+  POLL_MIN_OPTIONS: "최소 2개의 선택지가 필요합니다.",
+  POLL_MAX_OPTIONS: "선택지는 최대 10개까지 추가할 수 있습니다.",
 } as const;
 
 export const SUCCESS_MESSAGES = {
@@ -45,4 +55,8 @@ export const SUCCESS_MESSAGES = {
 
   // 삭제
   DELETED: (resource: string) => `${resource}이(가) 삭제되었습니다.`,
+
+  // 여론조사
+  VOTE_SUCCESS: "투표가 완료되었습니다.",
+  POLL_CREATED: "여론조사 제안이 등록되었습니다.",
 } as const;

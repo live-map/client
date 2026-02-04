@@ -31,4 +31,26 @@ export const CACHE_TAGS = {
 
   /** 사용자별 아이템 목록 */
   USER_ITEMS: (userId: string) => `user-items-${userId}` as const,
+
+  // ===========================================
+  // Grapoll: 여론조사 캐시 태그
+  // ===========================================
+
+  /** 전체 여론조사 목록 */
+  POLLS: "polls",
+
+  /** 특정 여론조사 상세 */
+  POLL: (id: string) => `poll-${id}` as const,
+
+  /** 사용자별 여론조사 목록 */
+  USER_POLLS: (userId: string) => `user-polls-${userId}` as const,
+
+  /** 사용자별 투표 목록 */
+  USER_VOTES: (userId: string) => `user-votes-${userId}` as const,
+
+  /** 인기 여론조사 */
+  TRENDING_POLLS: "trending-polls",
+
+  /** 제안 여론조사 */
+  SUGGESTED_POLLS: "suggested-polls",
 } as const;

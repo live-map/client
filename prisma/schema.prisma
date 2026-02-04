@@ -68,6 +68,8 @@ model User {
   accounts Account[]
   sessions Session[]
   items    Item[]
+  polls    Poll[]
+  votes    Vote[]
 
   @@map("users")
 }
@@ -97,4 +99,97 @@ model Item {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("items")
+}
+
+// ===========================================
+// Grapoll: 여론조사 모델
+// ===========================================
+
+enum PollStatus {
+  DRAFT
+  ACTIVE
+  CLOSED
+}
+
+enum PollType {
+  OFFICIAL // 공식 여론조사
+  SUGGESTED // 유저 제안
+}
+
+enum SourceType {
+  NEWS
+  PAPER
+  ARTICLE
+  VIDEO
+  OTHER
+}
+
+model Poll {
+  id          String     @id @default(uuid())
+  title       String
+  description String?    @db.Text
+  type        PollType   @default(SUGGESTED)
+  status      PollStatus @default(DRAFT)
+  totalVotes  Int        @default(0) @map("total_votes")
+  viewCount   Int        @default(0) @map("view_count")
+  startsAt    DateTime?  @map("starts_at")
+  endsAt      DateTime?  @map("ends_at")
+
+  userId  String       @map("user_id")
+  user    User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  options PollOption[]
+  votes   Vote[]
+  sources PollSource[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([status, type])
+  @@index([totalVotes])
+  @@index([viewCount])
+  @@map("polls")
+}
+
+model PollOption {
+  id        String @id @default(uuid())
+  text      String
+  order     Int    @default(0)
+  voteCount Int    @default(0) @map("vote_count")
+
+  pollId String @map("poll_id")
+  poll   Poll   @relation(fields: [pollId], references: [id], onDelete: Cascade)
+  votes  Vote[]
+
+  @@map("poll_options")
+}
+
+model Vote {
+  id       String @id @default(uuid())
+  userId   String @map("user_id")
+  pollId   String @map("poll_id")
+  optionId String @map("option_id")
+
+  user   User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  poll   Poll       @relation(fields: [pollId], references: [id], onDelete: Cascade)
+  option PollOption @relation(fields: [optionId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@unique([userId, pollId])
+  @@map("votes")
+}
+
+model PollSource {
+  id          String     @id @default(uuid())
+  title       String
+  url         String
+  sourceType  SourceType @default(OTHER) @map("source_type")
+  description String?
+
+  pollId String @map("poll_id")
+  poll   Poll   @relation(fields: [pollId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("poll_sources")
 }
