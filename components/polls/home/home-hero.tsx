@@ -11,9 +11,9 @@ interface HomeHeroProps {
 
 export function HomeHero({ trending, onPollClick }: HomeHeroProps) {
   return (
-    <section className="px-4 pb-2 pt-3">
+    <section className="px-4 pb-1 pt-2">
       {/* Motivational Message */}
-      <div className="mb-3">
+      <div className="mb-2">
         <div className="mb-1 flex items-center gap-1.5">
           <Flag className="h-3.5 w-3.5 text-primary" />
           <span className="text-[11px] text-muted-foreground">국적표시, 실시간 IP탐지</span>
@@ -26,10 +26,10 @@ export function HomeHero({ trending, onPollClick }: HomeHeroProps) {
       </div>
 
       {/* Real-time Trending Polls */}
-      <div className="rounded-xl border border-border bg-card p-3">
-        <div className="mb-2 flex items-center gap-1.5">
+      <div className="rounded-xl border border-border bg-card p-2.5">
+        <div className="mb-1.5 flex items-center gap-1.5">
           <TrendingUp className="h-3.5 w-3.5 shrink-0 text-primary" />
-          <h2 className="text-xs font-medium text-foreground">지금 뜨고 있는 여론조사</h2>
+          <h2 className="text-xs font-medium text-foreground">실시간으로 뜨고 있는 여론조사</h2>
         </div>
         {trending.length > 0 ? (
           <TrendingTicker polls={trending} onPollClick={onPollClick} />

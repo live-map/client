@@ -49,7 +49,7 @@ async function main() {
     },
   });
 
-  // 2. 공식 하이라이트: 2025 대선 후보 지지율 조사
+  // 2. 공식 하이라이트: 2025 대선 후보 지지율 조사 (SINGLE_CHOICE)
   const highlight = await prisma.poll.create({
     data: {
       title: "2025 대선 후보 지지율 조사",
@@ -57,6 +57,7 @@ async function main() {
         "2025년 대한민국 대통령 선거 주요 후보들의 지지율을 조사합니다. 여러분의 한 표가 중요합니다.",
       type: "OFFICIAL",
       status: "ACTIVE",
+      interactionType: "SINGLE_CHOICE",
       totalVotes: 325000,
       viewCount: 1200000,
       userId: admin.id,
@@ -95,13 +96,14 @@ async function main() {
     },
   });
 
-  // 3. 공식 트렌딩 여론조사 3개
+  // 3. 공식 트렌딩 여론조사 - SINGLE_CHOICE
   await prisma.poll.create({
     data: {
       title: "의료개혁 방향에 대한 국민 의견",
       description: "의료 시스템 개혁의 방향성에 대한 국민 여론을 조사합니다.",
       type: "OFFICIAL",
       status: "ACTIVE",
+      interactionType: "SINGLE_CHOICE",
       totalVotes: 125000,
       viewCount: 450000,
       userId: admin.id,
@@ -116,52 +118,125 @@ async function main() {
     },
   });
 
+  // 4. BINARY - 양자택일
   await prisma.poll.create({
     data: {
-      title: "주 4일제 도입에 대한 찬반",
-      description: "주 4일 근무제 도입에 대한 국민 여론을 조사합니다.",
+      title: "원전 확대 vs 탈원전, 당신의 선택은?",
+      description: "에너지 정책의 핵심 쟁점에 대한 양자택일 투표입니다.",
       type: "OFFICIAL",
       status: "ACTIVE",
+      interactionType: "BINARY",
       totalVotes: 98000,
       viewCount: 380000,
       userId: admin.id,
       options: {
         create: [
-          { text: "찬성", order: 0, voteCount: 58800 },
-          { text: "반대", order: 1, voteCount: 29400 },
-          { text: "조건부 찬성", order: 2, voteCount: 9800 },
+          { text: "원전 확대", order: 0, voteCount: 54880 },
+          { text: "탈원전 지속", order: 1, voteCount: 43120 },
         ],
       },
     },
   });
 
+  // 5. EMOJI_REACTION - 이모지 반응
   await prisma.poll.create({
     data: {
-      title: "AI 규제 수준에 대한 의견",
-      description: "인공지능 기술 규제의 적절한 수준에 대한 국민 여론을 조사합니다.",
+      title: "AI 시대, 당신의 기분은?",
+      description: "인공지능이 일상에 들어오는 것에 대한 감정을 이모지로 표현해주세요.",
       type: "OFFICIAL",
       status: "ACTIVE",
+      interactionType: "EMOJI_REACTION",
       totalVotes: 76000,
       viewCount: 290000,
       userId: admin.id,
       options: {
         create: [
-          { text: "강한 규제 필요", order: 0, voteCount: 22800 },
-          { text: "적절한 규제", order: 1, voteCount: 34200 },
-          { text: "최소 규제", order: 2, voteCount: 15200 },
-          { text: "규제 불필요", order: 3, voteCount: 3800 },
+          { text: "🤩 기대돼요", order: 0, voteCount: 28880 },
+          { text: "🤔 복잡해요", order: 1, voteCount: 19760 },
+          { text: "😰 불안해요", order: 2, voteCount: 15200 },
+          { text: "😎 준비됐어요", order: 3, voteCount: 8360 },
+          { text: "😤 반대해요", order: 4, voteCount: 3800 },
         ],
       },
     },
   });
 
-  // 4. 유저 제안 여론조사 3개
+  // 6. SLIDER - 스펙트럼 슬라이더
+  await prisma.poll.create({
+    data: {
+      title: "주 4일제 도입 시기는 언제가 적절할까?",
+      description:
+        "주 4일 근무제 도입 시기에 대한 의견을 스펙트럼으로 표현해주세요. 0은 '지금 당장', 100은 '아직 이르다'를 의미합니다.",
+      type: "OFFICIAL",
+      status: "ACTIVE",
+      interactionType: "SLIDER",
+      totalVotes: 52000,
+      viewCount: 210000,
+      userId: admin.id,
+      options: {
+        create: [
+          { text: "지금 당장", order: 0, voteCount: 0 },
+          { text: "아직 이르다", order: 1, voteCount: 0 },
+        ],
+      },
+    },
+  });
+
+  // 7. MULTIPLE_CHOICE - 복수 선택
+  await prisma.poll.create({
+    data: {
+      title: "가장 시급한 사회 이슈는? (복수 선택)",
+      description: "현재 대한민국에서 가장 시급하게 해결해야 할 이슈를 모두 선택해주세요.",
+      type: "OFFICIAL",
+      status: "ACTIVE",
+      interactionType: "MULTIPLE_CHOICE",
+      totalVotes: 67000,
+      viewCount: 330000,
+      userId: admin.id,
+      options: {
+        create: [
+          { text: "저출생·고령화", order: 0, voteCount: 45560 },
+          { text: "주거 문제", order: 1, voteCount: 40200 },
+          { text: "양극화·불평등", order: 2, voteCount: 36180 },
+          { text: "기후 변화", order: 3, voteCount: 22110 },
+          { text: "교육 개혁", order: 4, voteCount: 18760 },
+          { text: "국방·안보", order: 5, voteCount: 14070 },
+        ],
+      },
+    },
+  });
+
+  // 8. RANKING - 순위 매기기
+  await prisma.poll.create({
+    data: {
+      title: "차기 정부 최우선 과제 순위를 매겨주세요",
+      description: "드래그하여 차기 정부가 가장 먼저 해결해야 할 과제의 순위를 매겨주세요.",
+      type: "OFFICIAL",
+      status: "ACTIVE",
+      interactionType: "RANKING",
+      totalVotes: 41000,
+      viewCount: 185000,
+      userId: admin.id,
+      options: {
+        create: [
+          { text: "경제 성장", order: 0, voteCount: 15580 },
+          { text: "복지 확대", order: 1, voteCount: 10250 },
+          { text: "외교·통일", order: 2, voteCount: 7380 },
+          { text: "과학기술 투자", order: 3, voteCount: 4920 },
+          { text: "문화·체육", order: 4, voteCount: 2870 },
+        ],
+      },
+    },
+  });
+
+  // 9. 유저 제안 여론조사 3개 (SINGLE_CHOICE)
   await prisma.poll.create({
     data: {
       title: "다음 지방선거에서 가장 중요한 이슈는?",
       description: "다가오는 지방선거에서 유권자들이 가장 중요하게 생각하는 이슈를 조사합니다.",
       type: "SUGGESTED",
       status: "ACTIVE",
+      interactionType: "SINGLE_CHOICE",
       totalVotes: 3200,
       viewCount: 15000,
       userId: user1.id,
@@ -182,6 +257,7 @@ async function main() {
       description: "전국 초중고등학교 급식 완전 무상화 정책에 대한 의견을 조사합니다.",
       type: "SUGGESTED",
       status: "ACTIVE",
+      interactionType: "SINGLE_CHOICE",
       totalVotes: 1800,
       viewCount: 8900,
       userId: user2.id,
@@ -201,6 +277,7 @@ async function main() {
       description: "최근 논의되고 있는 대중교통 요금 인상에 대한 시민 의견을 조사합니다.",
       type: "SUGGESTED",
       status: "ACTIVE",
+      interactionType: "SINGLE_CHOICE",
       totalVotes: 1200,
       viewCount: 6200,
       userId: user3.id,
@@ -215,9 +292,14 @@ async function main() {
   });
 
   console.log("✅ Seed completed!");
-  console.log(`  - Highlight: ${highlight.title}`);
-  console.log("  - 3 trending polls (OFFICIAL)");
-  console.log("  - 3 suggested polls (SUGGESTED)");
+  console.log(`  - Highlight: ${highlight.title} (SINGLE_CHOICE)`);
+  console.log("  - 1 SINGLE_CHOICE trending");
+  console.log("  - 1 BINARY trending");
+  console.log("  - 1 EMOJI_REACTION trending");
+  console.log("  - 1 SLIDER trending");
+  console.log("  - 1 MULTIPLE_CHOICE trending");
+  console.log("  - 1 RANKING trending");
+  console.log("  - 3 suggested polls (SINGLE_CHOICE)");
 }
 
 main()

@@ -16,7 +16,7 @@ import type {
 } from "@/lib/validations/poll";
 
 /**
- * 투표하기
+ * 투표하기 (인터랙션 타입별 분기)
  */
 export const castVote = withAuth(async (ctx, dto: CastVoteDto): Promise<ActionResult<Vote>> => {
   try {
@@ -25,7 +25,7 @@ export const castVote = withAuth(async (ctx, dto: CastVoteDto): Promise<ActionRe
       return { error: validation.error.issues[0]?.message ?? ERROR_MESSAGES.INVALID_INPUT };
     }
 
-    const { pollId, optionId } = dto;
+    const { pollId } = dto;
 
     // 여론조사 존재 여부 및 상태 확인
     const poll = await prisma.poll.findUnique({
@@ -39,12 +39,6 @@ export const castVote = withAuth(async (ctx, dto: CastVoteDto): Promise<ActionRe
 
     if (poll.status !== "ACTIVE") {
       return { error: ERROR_MESSAGES.POLL_NOT_ACTIVE };
-    }
-
-    // 선택지가 해당 여론조사에 속하는지 확인
-    const validOption = poll.options.find((o) => o.id === optionId);
-    if (!validOption) {
-      return { error: ERROR_MESSAGES.POLL_OPTION_INVALID };
     }
 
     // 이미 투표했는지 확인
@@ -61,31 +55,122 @@ export const castVote = withAuth(async (ctx, dto: CastVoteDto): Promise<ActionRe
       return { error: ERROR_MESSAGES.POLL_ALREADY_VOTED };
     }
 
-    // 트랜잭션으로 투표 처리
-    const vote = await prisma.$transaction(async (tx) => {
-      // 투표 생성
-      const newVote = await tx.vote.create({
-        data: {
-          userId: ctx.user.id,
-          pollId,
-          optionId,
-        },
-      });
+    const optionIds = new Set(poll.options.map((o) => o.id));
 
-      // 선택지 투표수 증가
-      await tx.pollOption.update({
-        where: { id: optionId },
-        data: { voteCount: { increment: 1 } },
-      });
+    // 인터랙션 타입별 투표 처리
+    let vote: Vote;
 
-      // 여론조사 총 투표수 증가
-      await tx.poll.update({
-        where: { id: pollId },
-        data: { totalVotes: { increment: 1 } },
-      });
+    switch (dto.interactionType) {
+      case "SINGLE_CHOICE":
+      case "BINARY":
+      case "EMOJI_REACTION": {
+        if (!optionIds.has(dto.optionId)) {
+          return { error: ERROR_MESSAGES.POLL_OPTION_INVALID };
+        }
 
-      return newVote;
-    });
+        vote = await prisma.$transaction(async (tx) => {
+          const newVote = await tx.vote.create({
+            data: {
+              userId: ctx.user.id,
+              pollId,
+              optionId: dto.optionId,
+            },
+          });
+          await tx.pollOption.update({
+            where: { id: dto.optionId },
+            data: { voteCount: { increment: 1 } },
+          });
+          await tx.poll.update({
+            where: { id: pollId },
+            data: { totalVotes: { increment: 1 } },
+          });
+          return newVote;
+        });
+        break;
+      }
+
+      case "SLIDER": {
+        vote = await prisma.$transaction(async (tx) => {
+          const newVote = await tx.vote.create({
+            data: {
+              userId: ctx.user.id,
+              pollId,
+              sliderValue: dto.sliderValue,
+            },
+          });
+          await tx.poll.update({
+            where: { id: pollId },
+            data: { totalVotes: { increment: 1 } },
+          });
+          return newVote;
+        });
+        break;
+      }
+
+      case "MULTIPLE_CHOICE": {
+        // 선택된 옵션이 모두 유효한지 확인
+        for (const id of dto.selectedOptionIds) {
+          if (!optionIds.has(id)) {
+            return { error: ERROR_MESSAGES.POLL_OPTION_INVALID };
+          }
+        }
+
+        vote = await prisma.$transaction(async (tx) => {
+          const newVote = await tx.vote.create({
+            data: {
+              userId: ctx.user.id,
+              pollId,
+              selectedOptionIds: dto.selectedOptionIds,
+            },
+          });
+          // 선택된 각 옵션의 투표수 증가
+          for (const id of dto.selectedOptionIds) {
+            await tx.pollOption.update({
+              where: { id },
+              data: { voteCount: { increment: 1 } },
+            });
+          }
+          await tx.poll.update({
+            where: { id: pollId },
+            data: { totalVotes: { increment: 1 } },
+          });
+          return newVote;
+        });
+        break;
+      }
+
+      case "RANKING": {
+        // 랭킹 데이터의 모든 옵션이 유효한지 확인
+        for (const id of dto.rankingData) {
+          if (!optionIds.has(id)) {
+            return { error: ERROR_MESSAGES.POLL_OPTION_INVALID };
+          }
+        }
+
+        vote = await prisma.$transaction(async (tx) => {
+          const newVote = await tx.vote.create({
+            data: {
+              userId: ctx.user.id,
+              pollId,
+              rankingData: dto.rankingData,
+            },
+          });
+          // 1위 옵션의 투표수 증가 (대표 집계용)
+          if (dto.rankingData[0]) {
+            await tx.pollOption.update({
+              where: { id: dto.rankingData[0] },
+              data: { voteCount: { increment: 1 } },
+            });
+          }
+          await tx.poll.update({
+            where: { id: pollId },
+            data: { totalVotes: { increment: 1 } },
+          });
+          return newVote;
+        });
+        break;
+      }
+    }
 
     // 캐시 무효화
     updateTag(CACHE_TAGS.POLLS);

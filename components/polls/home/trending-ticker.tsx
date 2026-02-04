@@ -1,16 +1,19 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
-import { AnimatePresence, motion, useReducedMotion } from "motion/react";
-import { Pause, Play, ChevronDown, ChevronUp, Users } from "lucide-react";
-import { TrendingTickerItem } from "@/components/polls/home/trending-ticker-item";
+import { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "motion/react";
+import { Users, ChevronDown, ChevronUp } from "lucide-react";
 import type { PollCardData } from "@/app/actions/polls/queries";
 
 const CYCLE_INTERVAL = 4000;
-const COMPACT_H = 36;
-const CENTER_H = 96;
-const GAP = 4;
-const TOTAL_H = COMPACT_H + GAP + CENTER_H + GAP + COMPACT_H;
+
+const INTERACTION_SHORT_LABELS: Record<string, string> = {
+  BINARY: "A vs B",
+  EMOJI_REACTION: "이모지",
+  SLIDER: "스펙트럼",
+  MULTIPLE_CHOICE: "복수선택",
+  RANKING: "순위",
+};
 
 interface TrendingTickerProps {
   polls: PollCardData[];
@@ -18,76 +21,31 @@ interface TrendingTickerProps {
 }
 
 export function TrendingTicker({ polls, onPollClick }: TrendingTickerProps) {
-  const shouldReduceMotion = useReducedMotion();
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [isPaused, setIsPaused] = useState(false);
+  const [activeIndex, setActiveIndex] = useState(0);
   const [isExpanded, setIsExpanded] = useState(false);
-  const resumeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const displayPolls = polls.slice(0, 3);
 
-  const count = polls.length;
-
-  const advance = useCallback(() => {
-    setCurrentIndex((prev) => (prev + 1) % count);
-  }, [count]);
-
-  // Auto-cycle (pause when expanded)
+  // Auto-cycle highlight
   useEffect(() => {
-    if (isPaused || isExpanded || shouldReduceMotion || count <= 1) return;
-    const id = setInterval(advance, CYCLE_INTERVAL);
+    if (isExpanded || displayPolls.length <= 1) return;
+    const id = setInterval(() => {
+      setActiveIndex((prev) => (prev + 1) % displayPolls.length);
+    }, CYCLE_INTERVAL);
     return () => clearInterval(id);
-  }, [isPaused, isExpanded, shouldReduceMotion, advance, count]);
+  }, [isExpanded, displayPolls.length]);
 
-  // Cleanup
-  useEffect(() => {
-    return () => {
-      if (resumeTimeoutRef.current) clearTimeout(resumeTimeoutRef.current);
-    };
-  }, []);
-
-  const goTo = useCallback((index: number) => {
-    setCurrentIndex(index);
-    setIsPaused(true);
-    if (resumeTimeoutRef.current) clearTimeout(resumeTimeoutRef.current);
-    resumeTimeoutRef.current = setTimeout(() => setIsPaused(false), 5000);
-  }, []);
-
-  const prevIdx = (currentIndex - 1 + count) % count;
-  const nextIdx = (currentIndex + 1) % count;
-
-  // Reduced motion fallback
-  if (shouldReduceMotion || count <= 1) {
-    return (
-      <div className="space-y-2">
-        {polls.slice(0, 3).map((poll, i) => (
-          <TrendingTickerItem
-            key={poll.id}
-            poll={poll}
-            rank={i + 1}
-            isCentered={i === 0}
-            onClick={() => onPollClick(poll.id)}
-          />
-        ))}
-      </div>
-    );
-  }
-
-  const slots = [
-    { idx: prevIdx, pos: "prev" as const, baseY: 0, h: COMPACT_H },
-    { idx: currentIndex, pos: "center" as const, baseY: COMPACT_H + GAP, h: CENTER_H },
-    { idx: nextIdx, pos: "next" as const, baseY: COMPACT_H + GAP + CENTER_H + GAP, h: COMPACT_H },
-  ];
-
-  // --- Expanded: flat list ---
+  // Expanded: show all polls
   if (isExpanded) {
     return (
-      <div role="region" aria-label="실시간 인기 여론조사">
+      <div>
         <motion.div
-          className="space-y-1"
+          className="space-y-0.5"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.2 }}
         >
           {polls.map((poll, i) => {
+            const interactionLabel = INTERACTION_SHORT_LABELS[poll.interactionType];
             const leading = poll.options.reduce(
               (max, opt) => (opt.voteCount > max.voteCount ? opt : max),
               poll.options[0]!
@@ -108,7 +66,16 @@ export function TrendingTicker({ polls, onPollClick }: TrendingTickerProps) {
                   {i + 1}
                 </span>
                 <div className="min-w-0 flex-1">
-                  <p className="text-sm font-semibold text-foreground leading-snug">{poll.title}</p>
+                  <div className="flex items-center gap-1.5">
+                    <p className="text-sm font-semibold text-foreground leading-snug line-clamp-1">
+                      {poll.title}
+                    </p>
+                    {interactionLabel && (
+                      <span className="shrink-0 rounded bg-primary/10 px-1.5 py-0.5 text-[9px] font-medium text-primary">
+                        {interactionLabel}
+                      </span>
+                    )}
+                  </div>
                   {poll.description && (
                     <p className="mt-0.5 text-[11px] text-muted-foreground line-clamp-1">
                       {poll.description}
@@ -135,89 +102,84 @@ export function TrendingTicker({ polls, onPollClick }: TrendingTickerProps) {
         <button
           type="button"
           onClick={() => setIsExpanded(false)}
-          className="mt-1 flex w-full items-center justify-center py-1.5 text-muted-foreground transition-colors hover:text-foreground"
+          className="mt-1 flex w-full items-center justify-center gap-1 py-1.5 text-xs text-muted-foreground transition-colors hover:text-foreground"
           aria-label="접기"
         >
-          <ChevronUp className="h-4 w-4" />
+          접기
+          <ChevronUp className="h-3.5 w-3.5" />
         </button>
       </div>
     );
   }
 
-  // --- Collapsed: animated ticker ---
+  // Collapsed: compact v0-style list with auto-highlight
   return (
-    <div
-      onMouseEnter={() => setIsPaused(true)}
-      onMouseLeave={() => setIsPaused(false)}
-      role="region"
-      aria-label="실시간 인기 여론조사"
-    >
-      {/* Ticker viewport */}
-      <div className="relative overflow-hidden" style={{ height: TOTAL_H }}>
-        <AnimatePresence mode="popLayout" initial={false}>
-          {slots.map(({ idx, pos, baseY, h }) => (
-            <motion.div
-              key={`${polls[idx]!.id}-${pos}`}
-              className="absolute inset-x-0"
-              style={{ height: h }}
-              initial={{ opacity: 0, y: pos === "prev" ? -COMPACT_H : TOTAL_H }}
-              animate={{ opacity: 1, y: baseY }}
-              exit={{ opacity: 0, y: pos === "next" ? TOTAL_H : -COMPACT_H }}
-              transition={{ duration: 0.5, ease: [0.33, 1, 0.68, 1] }}
+    <div>
+      <div className="space-y-0.5">
+        {displayPolls.map((poll, i) => {
+          const isActive = i === activeIndex;
+          const interactionLabel = INTERACTION_SHORT_LABELS[poll.interactionType];
+
+          return (
+            <button
+              key={poll.id}
+              type="button"
+              onClick={() => onPollClick(poll.id)}
+              className="relative flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left transition-colors hover:bg-muted/50"
             >
-              <TrendingTickerItem
-                poll={polls[idx]!}
-                rank={idx + 1}
-                isCentered={pos === "center"}
-                onClick={() => {
-                  if (pos === "center") onPollClick(polls[idx]!.id);
-                  else goTo(idx);
-                }}
-              />
-            </motion.div>
-          ))}
-        </AnimatePresence>
+              {/* Active highlight indicator */}
+              <AnimatePresence>
+                {isActive && (
+                  <motion.div
+                    className="absolute inset-0 rounded-lg bg-primary/5"
+                    layoutId="trending-highlight"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.3 }}
+                  />
+                )}
+              </AnimatePresence>
+
+              <span
+                className={`relative z-10 min-w-[18px] text-xs font-bold ${isActive ? "text-primary" : "text-primary/60"}`}
+              >
+                {i + 1}
+              </span>
+              <p className="relative z-10 flex-1 text-xs text-foreground line-clamp-1">
+                {poll.title}
+              </p>
+              <div className="relative z-10 flex shrink-0 items-center gap-1.5">
+                {interactionLabel && (
+                  <span className="rounded bg-primary/10 px-1 py-0.5 text-[9px] font-medium text-primary">
+                    {interactionLabel}
+                  </span>
+                )}
+                <span className="text-[10px] text-muted-foreground">
+                  {poll.totalVotes.toLocaleString()}명
+                </span>
+                {i === 0 && (
+                  <span className="rounded bg-destructive/10 px-1.5 py-0.5 text-[9px] font-bold text-destructive">
+                    HOT
+                  </span>
+                )}
+              </div>
+            </button>
+          );
+        })}
       </div>
 
-      {/* Controls: dots + pause */}
-      <div className="mt-1 flex items-center justify-between">
-        <div className="flex items-center gap-1">
-          {polls.map((_, i) => (
-            <button
-              key={polls[i]!.id}
-              type="button"
-              onClick={() => goTo(i)}
-              className={`h-1.5 rounded-full transition-all duration-300 ${
-                i === currentIndex ? "w-5 bg-primary" : "w-1.5 bg-muted-foreground/25"
-              }`}
-              aria-label={`${i + 1}번째 여론조사로 이동`}
-            />
-          ))}
-        </div>
+      {polls.length > 3 && (
         <button
           type="button"
-          onClick={() => setIsPaused(!isPaused)}
-          className="rounded-full p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-          aria-label={isPaused ? "자동 순환 재개" : "자동 순환 일시정지"}
+          onClick={() => setIsExpanded(true)}
+          className="mt-1 flex w-full items-center justify-center gap-1 py-1.5 text-xs text-muted-foreground transition-colors hover:text-foreground"
+          aria-label="전체 목록 펼치기"
         >
-          {isPaused ? <Play className="h-3 w-3" /> : <Pause className="h-3 w-3" />}
+          펼치기
+          <ChevronDown className="h-3.5 w-3.5" />
         </button>
-      </div>
-
-      {/* Expand — center bottom */}
-      <button
-        type="button"
-        onClick={() => setIsExpanded(true)}
-        className="mt-1 flex w-full items-center justify-center gap-1 py-1.5 text-xs text-muted-foreground transition-colors hover:text-foreground"
-        aria-label="전체 목록 펼치기"
-      >
-        펼치기
-        <ChevronDown className="h-3.5 w-3.5" />
-      </button>
-
-      <div className="sr-only" aria-live="polite">
-        현재 {currentIndex + 1}위: {polls[currentIndex]?.title}
-      </div>
+      )}
     </div>
   );
 }

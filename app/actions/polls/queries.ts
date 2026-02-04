@@ -18,7 +18,16 @@ export type PollWithDetails = Poll & {
  */
 export type PollCardData = Pick<
   Poll,
-  "id" | "title" | "description" | "type" | "status" | "totalVotes" | "viewCount" | "createdAt"
+  | "id"
+  | "title"
+  | "description"
+  | "type"
+  | "status"
+  | "interactionType"
+  | "totalVotes"
+  | "viewCount"
+  | "createdAt"
+  | "endsAt"
 > & {
   options: Pick<PollOption, "id" | "text" | "voteCount">[];
   user?: { name: string | null };
@@ -46,9 +55,11 @@ export async function getHomeFeed(): Promise<{
         description: true,
         type: true,
         status: true,
+        interactionType: true,
         totalVotes: true,
         viewCount: true,
         createdAt: true,
+        endsAt: true,
         options: {
           select: { id: true, text: true, voteCount: true },
           orderBy: { order: "asc" },
@@ -60,16 +71,18 @@ export async function getHomeFeed(): Promise<{
     prisma.poll.findMany({
       where: { status: "ACTIVE" },
       orderBy: { totalVotes: "desc" },
-      take: 5,
+      take: 10,
       select: {
         id: true,
         title: true,
         description: true,
         type: true,
         status: true,
+        interactionType: true,
         totalVotes: true,
         viewCount: true,
         createdAt: true,
+        endsAt: true,
         options: {
           select: { id: true, text: true, voteCount: true },
           orderBy: { order: "asc" },
@@ -91,9 +104,11 @@ export async function getHomeFeed(): Promise<{
         description: true,
         type: true,
         status: true,
+        interactionType: true,
         totalVotes: true,
         viewCount: true,
         createdAt: true,
+        endsAt: true,
         options: {
           select: { id: true, text: true, voteCount: true },
           orderBy: { order: "asc" },
@@ -120,9 +135,11 @@ export async function getTrendingPolls(limit = 10): Promise<PollCardData[]> {
       description: true,
       type: true,
       status: true,
+      interactionType: true,
       totalVotes: true,
       viewCount: true,
       createdAt: true,
+      endsAt: true,
       options: {
         select: { id: true, text: true, voteCount: true },
         orderBy: { order: "asc" },
@@ -150,9 +167,11 @@ export async function getSuggestedPolls(limit = 10): Promise<PollCardData[]> {
       description: true,
       type: true,
       status: true,
+      interactionType: true,
       totalVotes: true,
       viewCount: true,
       createdAt: true,
+      endsAt: true,
       options: {
         select: { id: true, text: true, voteCount: true },
         orderBy: { order: "asc" },
@@ -183,7 +202,12 @@ export async function getPollById(id: string): Promise<PollWithDetails | null> {
 /**
  * 사용자의 투표 여부 확인
  */
-export async function getUserVote(pollId: string): Promise<Vote | null> {
+export type UserVoteData = Pick<
+  Vote,
+  "id" | "optionId" | "sliderValue" | "selectedOptionIds" | "rankingData"
+>;
+
+export async function getUserVote(pollId: string): Promise<UserVoteData | null> {
   const session = await auth();
 
   if (!session?.user?.id) {
@@ -196,6 +220,13 @@ export async function getUserVote(pollId: string): Promise<Vote | null> {
         userId: session.user.id,
         pollId,
       },
+    },
+    select: {
+      id: true,
+      optionId: true,
+      sliderValue: true,
+      selectedOptionIds: true,
+      rankingData: true,
     },
   });
 
@@ -222,9 +253,11 @@ export async function getUserVotedPolls(): Promise<PollCardData[]> {
           description: true,
           type: true,
           status: true,
+          interactionType: true,
           totalVotes: true,
           viewCount: true,
           createdAt: true,
+          endsAt: true,
           options: {
             select: { id: true, text: true, voteCount: true },
             orderBy: { order: "asc" },
@@ -257,9 +290,83 @@ export async function getUserPolls(): Promise<PollCardData[]> {
       description: true,
       type: true,
       status: true,
+      interactionType: true,
       totalVotes: true,
       viewCount: true,
       createdAt: true,
+      endsAt: true,
+      options: {
+        select: { id: true, text: true, voteCount: true },
+        orderBy: { order: "asc" },
+      },
+    },
+  });
+
+  return polls;
+}
+
+/**
+ * 피드 정렬 모드
+ */
+export type PollSortMode = "popular" | "recent" | "ending_soon" | "closed";
+
+/**
+ * 홈 피드용 여론조사 목록 (정렬 + 검색)
+ */
+export async function getPollFeed(
+  sort: PollSortMode = "popular",
+  search?: string,
+  limit = 20
+): Promise<PollCardData[]> {
+  const now = new Date();
+
+  const searchFilter = search
+    ? {
+        OR: [
+          { title: { contains: search, mode: "insensitive" as const } },
+          { description: { contains: search, mode: "insensitive" as const } },
+        ],
+      }
+    : {};
+
+  let where: Record<string, unknown>;
+  let orderBy: Record<string, string>;
+
+  switch (sort) {
+    case "recent":
+      where = { status: "ACTIVE", ...searchFilter };
+      orderBy = { createdAt: "desc" };
+      break;
+    case "ending_soon":
+      where = { status: "ACTIVE", endsAt: { gt: now }, ...searchFilter };
+      orderBy = { endsAt: "asc" };
+      break;
+    case "closed":
+      where = { status: "CLOSED", ...searchFilter };
+      orderBy = { createdAt: "desc" };
+      break;
+    case "popular":
+    default:
+      where = { status: "ACTIVE", ...searchFilter };
+      orderBy = { totalVotes: "desc" };
+      break;
+  }
+
+  const polls = await prisma.poll.findMany({
+    where,
+    orderBy,
+    take: limit,
+    select: {
+      id: true,
+      title: true,
+      description: true,
+      type: true,
+      status: true,
+      interactionType: true,
+      totalVotes: true,
+      viewCount: true,
+      createdAt: true,
+      endsAt: true,
       options: {
         select: { id: true, text: true, voteCount: true },
         orderBy: { order: "asc" },

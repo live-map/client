@@ -9,7 +9,7 @@ interface HighlightPollProps {
 }
 
 export function HighlightPoll({ poll, onClick }: HighlightPollProps) {
-  const categoryLabel = poll.type === "OFFICIAL" ? "공식 여론조사" : "제안 여론조사";
+  const categoryLabel = poll.type === "OFFICIAL" ? "정치" : "제안";
 
   return (
     <section className="px-4 py-3">

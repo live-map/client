@@ -116,6 +116,15 @@ enum PollType {
   SUGGESTED // 유저 제안
 }
 
+enum InteractionType {
+  SINGLE_CHOICE // 단일 선택 (기본)
+  BINARY // A vs B 양자택일
+  EMOJI_REACTION // 이모지 반응
+  SLIDER // 스펙트럼 슬라이더
+  MULTIPLE_CHOICE // 복수 선택
+  RANKING // 순위 매기기
+}
+
 enum SourceType {
   NEWS
   PAPER
@@ -125,15 +134,16 @@ enum SourceType {
 }
 
 model Poll {
-  id          String     @id @default(uuid())
-  title       String
-  description String?    @db.Text
-  type        PollType   @default(SUGGESTED)
-  status      PollStatus @default(DRAFT)
-  totalVotes  Int        @default(0) @map("total_votes")
-  viewCount   Int        @default(0) @map("view_count")
-  startsAt    DateTime?  @map("starts_at")
-  endsAt      DateTime?  @map("ends_at")
+  id              String          @id @default(uuid())
+  title           String
+  description     String?         @db.Text
+  type            PollType        @default(SUGGESTED)
+  status          PollStatus      @default(DRAFT)
+  interactionType InteractionType @default(SINGLE_CHOICE) @map("interaction_type")
+  totalVotes      Int             @default(0) @map("total_votes")
+  viewCount       Int             @default(0) @map("view_count")
+  startsAt        DateTime?       @map("starts_at")
+  endsAt          DateTime?       @map("ends_at")
 
   userId  String       @map("user_id")
   user    User         @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -164,14 +174,19 @@ model PollOption {
 }
 
 model Vote {
-  id       String @id @default(uuid())
-  userId   String @map("user_id")
-  pollId   String @map("poll_id")
-  optionId String @map("option_id")
+  id       String  @id @default(uuid())
+  userId   String  @map("user_id")
+  pollId   String  @map("poll_id")
+  optionId String? @map("option_id")
 
-  user   User       @relation(fields: [userId], references: [id], onDelete: Cascade)
-  poll   Poll       @relation(fields: [pollId], references: [id], onDelete: Cascade)
-  option PollOption @relation(fields: [optionId], references: [id], onDelete: Cascade)
+  // Interaction-specific fields
+  sliderValue       Int?     @map("slider_value") // SLIDER: 0-100
+  selectedOptionIds String[] @map("selected_option_ids") // MULTIPLE_CHOICE
+  rankingData       Json?    @map("ranking_data") // RANKING: [optionId, ...]
+
+  user   User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  poll   Poll        @relation(fields: [pollId], references: [id], onDelete: Cascade)
+  option PollOption? @relation(fields: [optionId], references: [id], onDelete: Cascade)
 
   createdAt DateTime @default(now()) @map("created_at")
 

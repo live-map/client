@@ -52,12 +52,52 @@ export const updatePollSchema = z.object({
 export type UpdatePollFormValues = z.infer<typeof updatePollSchema>;
 
 /**
- * 투표 스키마
+ * 투표 스키마 (인터랙션 타입별 discriminated union)
  */
-export const castVoteSchema = z.object({
+const singleChoiceVoteSchema = z.object({
   pollId: z.string().uuid("유효하지 않은 여론조사 ID입니다"),
+  interactionType: z.literal("SINGLE_CHOICE"),
   optionId: z.string().uuid("유효하지 않은 선택지 ID입니다"),
 });
+
+const binaryVoteSchema = z.object({
+  pollId: z.string().uuid("유효하지 않은 여론조사 ID입니다"),
+  interactionType: z.literal("BINARY"),
+  optionId: z.string().uuid("유효하지 않은 선택지 ID입니다"),
+});
+
+const emojiVoteSchema = z.object({
+  pollId: z.string().uuid("유효하지 않은 여론조사 ID입니다"),
+  interactionType: z.literal("EMOJI_REACTION"),
+  optionId: z.string().uuid("유효하지 않은 선택지 ID입니다"),
+});
+
+const sliderVoteSchema = z.object({
+  pollId: z.string().uuid("유효하지 않은 여론조사 ID입니다"),
+  interactionType: z.literal("SLIDER"),
+  sliderValue: z.number().min(0).max(100),
+});
+
+const multipleChoiceVoteSchema = z.object({
+  pollId: z.string().uuid("유효하지 않은 여론조사 ID입니다"),
+  interactionType: z.literal("MULTIPLE_CHOICE"),
+  selectedOptionIds: z.array(z.string().uuid()).min(1, "최소 1개 이상 선택해주세요"),
+});
+
+const rankingVoteSchema = z.object({
+  pollId: z.string().uuid("유효하지 않은 여론조사 ID입니다"),
+  interactionType: z.literal("RANKING"),
+  rankingData: z.array(z.string().uuid()).min(2, "최소 2개 항목의 순위를 매겨주세요"),
+});
+
+export const castVoteSchema = z.discriminatedUnion("interactionType", [
+  singleChoiceVoteSchema,
+  binaryVoteSchema,
+  emojiVoteSchema,
+  sliderVoteSchema,
+  multipleChoiceVoteSchema,
+  rankingVoteSchema,
+]);
 
 export type CastVoteDto = z.infer<typeof castVoteSchema>;
 

@@ -53,4 +53,7 @@ export const CACHE_TAGS = {
 
   /** 제안 여론조사 */
   SUGGESTED_POLLS: "suggested-polls",
+
+  /** 여론조사 피드 */
+  POLL_FEED: "poll-feed",
 } as const;

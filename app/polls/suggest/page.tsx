@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Eye, MessageSquare, ChevronRight } from "lucide-react";
+import { ArrowLeft, Eye, MessageSquare, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { getSuggestedPolls } from "@/app/actions/polls";
 
@@ -14,10 +14,19 @@ export default async function SuggestPage() {
   const polls = await getSuggestedPolls(20);
 
   return (
-    <div className="px-4 py-6">
-      <div className="mb-6 flex items-center justify-between">
-        <h1 className="text-xl font-bold">제안된 여론조사</h1>
-        <Button asChild>
+    <div className="px-4 py-4">
+      <div className="mb-4 flex items-center gap-3">
+        <Link
+          href="/polls"
+          className="flex h-8 w-8 items-center justify-center rounded-full transition-colors hover:bg-muted"
+        >
+          <ArrowLeft className="h-4 w-4 text-foreground" />
+        </Link>
+        <h1 className="text-lg font-bold">유저 제안 여론조사</h1>
+      </div>
+
+      <div className="mb-4 flex justify-end">
+        <Button size="sm" asChild>
           <Link href="/polls/suggest/new">제안하기 +</Link>
         </Button>
       </div>

@@ -27,7 +27,7 @@ export default async function PollDetailPage({ params }: PollDetailPageProps) {
       poll={poll}
       isLoggedIn={!!session?.user}
       userName={session?.user?.name}
-      userVotedOptionId={userVote?.optionId}
+      userVote={userVote}
     />
   );
 }

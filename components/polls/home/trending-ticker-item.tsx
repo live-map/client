@@ -19,6 +19,15 @@ export function TrendingTickerItem({ poll, rank, isCentered, onClick }: Trending
   const leadingPct = poll.totalVotes > 0 ? (leadingOption.voteCount / poll.totalVotes) * 100 : 0;
   const categoryLabel = poll.type === "OFFICIAL" ? "공식" : "제안";
 
+  const INTERACTION_SHORT_LABELS: Record<string, string> = {
+    BINARY: "A vs B",
+    EMOJI_REACTION: "이모지",
+    SLIDER: "스펙트럼",
+    MULTIPLE_CHOICE: "복수선택",
+    RANKING: "순위",
+  };
+  const interactionLabel = INTERACTION_SHORT_LABELS[poll.interactionType];
+
   if (!isCentered) {
     // Compact row — dimmed, smaller
     return (
@@ -57,6 +66,11 @@ export function TrendingTickerItem({ poll, rank, isCentered, onClick }: Trending
         <span className="rounded bg-muted px-1.5 py-0.5 text-[9px] font-medium text-muted-foreground">
           {categoryLabel}
         </span>
+        {interactionLabel && (
+          <span className="rounded bg-primary/10 px-1.5 py-0.5 text-[9px] font-medium text-primary">
+            {interactionLabel}
+          </span>
+        )}
         {rank === 1 && <Flame className="h-3.5 w-3.5 text-destructive" />}
         <p className="flex-1 text-sm font-bold text-foreground leading-snug line-clamp-1">
           {poll.title}

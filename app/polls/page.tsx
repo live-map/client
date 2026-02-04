@@ -1,17 +1,20 @@
 import { auth } from "@/lib/auth";
-import { getHomeFeed } from "@/app/actions/polls";
+import { getTrendingPolls, getPollFeed } from "@/app/actions/polls";
 import { PollsHomeClient } from "@/components/polls/home/polls-home-client";
 
 export const dynamic = "force-dynamic";
 
 export default async function PollsPage() {
-  const [session, feed] = await Promise.all([auth(), getHomeFeed()]);
+  const [session, trending, initialFeed] = await Promise.all([
+    auth(),
+    getTrendingPolls(10),
+    getPollFeed("popular"),
+  ]);
 
   return (
     <PollsHomeClient
-      highlight={feed.highlight}
-      trending={feed.trending}
-      suggested={feed.suggested}
+      trending={trending}
+      initialFeed={initialFeed}
       isLoggedIn={!!session?.user}
       userName={session?.user?.name}
     />
