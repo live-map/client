@@ -28,6 +28,11 @@ const nextConfig: NextConfig = {
         hostname: "k.kakaocdn.net", // Kakao OAuth
         pathname: "/**",
       },
+      {
+        protocol: "https",
+        hostname: "images.unsplash.com", // Mock poll images
+        pathname: "/**",
+      },
     ],
   },
 

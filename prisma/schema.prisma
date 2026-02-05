@@ -65,11 +65,12 @@ model User {
   createdAt      DateTime  @default(now()) @map("created_at")
   updatedAt      DateTime  @updatedAt @map("updated_at")
 
-  accounts Account[]
-  sessions Session[]
-  items    Item[]
-  polls    Poll[]
-  votes    Vote[]
+  accounts     Account[]
+  sessions     Session[]
+  items        Item[]
+  polls        Poll[]
+  votes        Vote[]
+  pollComments PollComment[]
 
   @@map("users")
 }
@@ -137,6 +138,10 @@ model Poll {
   id              String          @id @default(uuid())
   title           String
   description     String?         @db.Text
+  imageUrl        String?         @map("image_url")
+  category        String?
+  aiContent       String?         @db.Text @map("ai_content")
+  aiUpdatedAt     DateTime?       @map("ai_updated_at")
   type            PollType        @default(SUGGESTED)
   status          PollStatus      @default(DRAFT)
   interactionType InteractionType @default(SINGLE_CHOICE) @map("interaction_type")
@@ -145,11 +150,12 @@ model Poll {
   startsAt        DateTime?       @map("starts_at")
   endsAt          DateTime?       @map("ends_at")
 
-  userId  String       @map("user_id")
-  user    User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  options PollOption[]
-  votes   Vote[]
-  sources PollSource[]
+  userId   String        @map("user_id")
+  user     User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  options  PollOption[]
+  votes    Vote[]
+  sources  PollSource[]
+  comments PollComment[]
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
@@ -169,6 +175,7 @@ model PollOption {
   pollId String @map("poll_id")
   poll   Poll   @relation(fields: [pollId], references: [id], onDelete: Cascade)
   votes  Vote[]
+  comments PollComment[]
 
   @@map("poll_options")
 }
@@ -207,4 +214,27 @@ model PollSource {
   createdAt DateTime @default(now()) @map("created_at")
 
   @@map("poll_sources")
+}
+
+model PollComment {
+  id      String @id @default(uuid())
+  content String @db.Text
+  likes   Int    @default(0)
+
+  userId   String      @map("user_id")
+  pollId   String      @map("poll_id")
+  parentId String?     @map("parent_id")
+  optionId String?     @map("option_id")
+
+  user     User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  poll     Poll         @relation(fields: [pollId], references: [id], onDelete: Cascade)
+  parent   PollComment? @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
+  replies  PollComment[] @relation("CommentReplies")
+  option   PollOption?  @relation(fields: [optionId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([pollId, createdAt])
+  @@map("poll_comments")
 }

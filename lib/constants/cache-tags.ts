@@ -56,4 +56,7 @@ export const CACHE_TAGS = {
 
   /** 여론조사 피드 */
   POLL_FEED: "poll-feed",
+
+  /** 뜨거운 토론 */
+  HOT_DEBATE: "hot-debate",
 } as const;

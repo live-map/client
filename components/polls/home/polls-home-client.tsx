@@ -1,98 +1,56 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { PollsHeader } from "@/components/polls/layout/polls-header";
 import { HomeHero } from "@/components/polls/home/home-hero";
-import { PollFeed } from "@/components/polls/home/poll-feed";
-import { VoteCard } from "@/components/polls/poll/vote-card";
-import { getPollById, getUserVote } from "@/app/actions/polls";
-import type { PollCardData, PollWithDetails, UserVoteData } from "@/app/actions/polls/queries";
+import { HotDebate } from "@/components/polls/home/hot-debate";
+import { PollList } from "@/components/polls/home/poll-list";
+import { UserPollSection } from "@/components/polls/home/user-poll-section";
+import { CommunitySection } from "@/components/polls/home/community-section";
+import {
+  V0_POLL_LIST,
+  V0_HOT_DEBATES_BY_TYPE,
+  V0_USER_POLLS,
+  V0_COMMUNITY_POSTS,
+} from "@/lib/mock/polls";
 
-interface PollsHomeClientProps {
-  trending: PollCardData[];
-  initialFeed: PollCardData[];
-  isLoggedIn: boolean;
-  userName?: string | null;
-}
-
-export function PollsHomeClient({
-  trending,
-  initialFeed,
-  isLoggedIn,
-  userName,
-}: PollsHomeClientProps) {
+export function PollsHomeClient() {
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState<"poll" | "community">("poll");
-
-  const [selectedPollId, setSelectedPollId] = useState<string | null>(null);
-  const [selectedPoll, setSelectedPoll] = useState<PollWithDetails | null>(null);
-  const [userVote, setUserVote] = useState<UserVoteData | null>(null);
-  const [isVoteCardOpen, setIsVoteCardOpen] = useState(false);
-
-  useEffect(() => {
-    if (!selectedPollId) return;
-
-    let cancelled = false;
-
-    async function fetchPollDetails() {
-      const [poll, vote] = await Promise.all([
-        getPollById(selectedPollId!),
-        getUserVote(selectedPollId!),
-      ]);
-      if (cancelled) return;
-      if (poll) {
-        setSelectedPoll(poll);
-        setUserVote(vote);
-        setIsVoteCardOpen(true);
-      }
-    }
-
-    fetchPollDetails();
-    return () => {
-      cancelled = true;
-    };
-  }, [selectedPollId]);
+  const hotDebate = V0_HOT_DEBATES_BY_TYPE.binary; // 가장 뜨거운 토론 (실제로는 서버에서 결정)
 
   const handlePollClick = (id: string) => {
-    setSelectedPollId(id);
+    router.push(`/polls/${id}`);
   };
 
-  const handleVoteCardClose = () => {
-    setIsVoteCardOpen(false);
-    setSelectedPollId(null);
-    setSelectedPoll(null);
-    setUserVote(null);
+  const handleCreatePoll = () => {
+    router.push("/polls/suggest/create");
   };
 
   return (
-    <>
-      <PollsHeader
-        activeTab={activeTab}
-        onTabChange={setActiveTab}
-        isLoggedIn={isLoggedIn}
-        userName={userName}
-      />
+    <div className="min-h-screen bg-background">
+      <PollsHeader activeTab={activeTab} onTabChange={setActiveTab} />
 
-      {activeTab === "poll" ? (
-        <div>
-          <HomeHero trending={trending} onPollClick={handlePollClick} />
-          <PollFeed initialFeed={initialFeed} onPollClick={handlePollClick} />
-        </div>
-      ) : (
-        <div className="flex flex-col items-center justify-center px-4 py-20">
-          <p className="text-lg font-medium text-muted-foreground">커뮤니티 준비 중입니다</p>
-          <p className="mt-2 text-sm text-muted-foreground">조금만 기다려주세요!</p>
-        </div>
-      )}
+      <main className="max-w-lg mx-auto pb-20">
+        {activeTab === "poll" ? (
+          <>
+            <HomeHero />
 
-      {selectedPoll && (
-        <VoteCard
-          poll={selectedPoll}
-          isOpen={isVoteCardOpen}
-          onClose={handleVoteCardClose}
-          isLoggedIn={isLoggedIn}
-          userVote={userVote}
-        />
-      )}
-    </>
+            <HotDebate debate={hotDebate} onClick={() => handlePollClick(hotDebate.id)} />
+
+            <PollList polls={V0_POLL_LIST} onPollClick={handlePollClick} />
+
+            <UserPollSection
+              polls={V0_USER_POLLS}
+              onCreateClick={handleCreatePoll}
+              onPollClick={handlePollClick}
+            />
+          </>
+        ) : (
+          <CommunitySection posts={V0_COMMUNITY_POSTS} />
+        )}
+      </main>
+    </div>
   );
 }
