@@ -18,6 +18,7 @@ const eslintConfig = defineConfig([
   },
   prettierConfig, // Prettier 설정은 항상 마지막에 위치해야 합니다.
   globalIgnores([".next/**", "out/**", "build/**", "next-env.d.ts"]),
+  globalIgnores(["generated/**"]),
 ]);
 
 export default eslintConfig;
