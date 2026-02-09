@@ -81,7 +81,7 @@ export function MainHeader() {
               className="flex items-center gap-1.5 px-2 py-1 text-xs text-muted-foreground hover:text-foreground hover:bg-foreground/5 rounded-md transition-colors"
             >
               <User className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">마이</span>
+              <span className="hidden sm:inline">마이페이지</span>
             </Link>
           ) : status === "unauthenticated" ? (
             <button

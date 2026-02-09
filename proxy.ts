@@ -17,7 +17,7 @@ export default async function proxy(request: NextRequest) {
   // Route patterns
   const isApiAuth = nextUrl.pathname.startsWith("/api/auth");
   const isAuthPage = nextUrl.pathname.startsWith("/auth/");
-  const isProtected = nextUrl.pathname.startsWith("/items");
+  const isProtected = nextUrl.pathname.startsWith("/profile");
 
   // Allow NextAuth API routes
   if (isApiAuth) return NextResponse.next();

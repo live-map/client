@@ -975,6 +975,12 @@ export type ListPostsApiV1PostsGetData = {
      * 건너뛸 수
      */
     offset?: number;
+    /**
+     * User Id
+     *
+     * 특정 사용자의 글만 조회
+     */
+    user_id?: string | null;
   };
   url: "/api/v1/posts";
 };
@@ -1334,13 +1340,19 @@ export type DeleteMediaFromPostApiV1PostsPostIdMediaMediaIdDeleteResponse =
 export type ListCommentsFlatApiV1CommentsGetData = {
   body?: never;
   path?: never;
-  query: {
+  query?: {
     /**
      * Post Id
      *
      * 게시글 UUID
      */
-    post_id: string;
+    post_id?: string | null;
+    /**
+     * User Id
+     *
+     * 특정 사용자의 댓글만 조회
+     */
+    user_id?: string | null;
     /**
      * Limit
      *

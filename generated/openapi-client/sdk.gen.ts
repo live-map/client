@@ -434,9 +434,9 @@ export const deleteMediaFromPostApiV1PostsPostIdMediaMediaIdDelete = <
  * 게시글의 댓글을 플랫 리스트로 조회합니다.
  */
 export const listCommentsFlatApiV1CommentsGet = <ThrowOnError extends boolean = false>(
-  options: Options<ListCommentsFlatApiV1CommentsGetData, ThrowOnError>
+  options?: Options<ListCommentsFlatApiV1CommentsGetData, ThrowOnError>
 ) =>
-  (options.client ?? client).get<
+  (options?.client ?? client).get<
     ListCommentsFlatApiV1CommentsGetResponses,
     ListCommentsFlatApiV1CommentsGetErrors,
     ThrowOnError
