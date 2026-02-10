@@ -8,11 +8,12 @@ import {
   Eye,
   TrendingUp,
   Clock,
-  ChevronRight,
   Flame,
   BarChart3,
   Heart,
   Calendar,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 
 import { getPostList } from "@/lib/api";
@@ -39,23 +40,55 @@ const timeWindowTabs: { key: SortType; label: string; icon: typeof Calendar }[] 
   { key: "monthly_hot", label: "월간", icon: Calendar },
 ];
 
+const POSTS_PER_PAGE = 20;
+
+function getPageNumbers(current: number, total: number): (number | "...")[] {
+  if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
+
+  const pages: (number | "...")[] = [1];
+  const start = Math.max(2, current - 1);
+  const end = Math.min(total - 1, current + 1);
+
+  if (start > 2) pages.push("...");
+  for (let i = start; i <= end; i++) pages.push(i);
+  if (end < total - 1) pages.push("...");
+  pages.push(total);
+
+  return pages;
+}
+
 export function CommunitySection({ initialPosts, initialTotal }: CommunitySectionProps) {
   const [sortType, setSortType] = useState<SortType>("popular");
   const [posts, setPosts] = useState<PostResponse[]>(initialPosts);
-  const [, setTotal] = useState(initialTotal);
+  const [total, setTotal] = useState(initialTotal);
+  const [currentPage, setCurrentPage] = useState(1);
   const [loading, setLoading] = useState(false);
+
+  const totalPages = Math.max(1, Math.ceil(total / POSTS_PER_PAGE));
 
   const isTimeWindow = (["daily_hot", "weekly_hot", "monthly_hot"] as SortType[]).includes(
     sortType
   );
 
-  const handleSortChange = async (newSort: SortType) => {
-    setSortType(newSort);
+  const fetchPosts = async (sort: SortType, page: number) => {
     setLoading(true);
-    const { data } = await getPostList(20, 0, newSort);
+    const offset = (page - 1) * POSTS_PER_PAGE;
+    const { data } = await getPostList(POSTS_PER_PAGE, offset, sort);
     setPosts(data?.items ?? []);
     setTotal(data?.total ?? 0);
     setLoading(false);
+  };
+
+  const handleSortChange = async (newSort: SortType) => {
+    setSortType(newSort);
+    setCurrentPage(1);
+    await fetchPosts(newSort, 1);
+  };
+
+  const handlePageChange = async (page: number) => {
+    if (page < 1 || page > totalPages || page === currentPage) return;
+    setCurrentPage(page);
+    await fetchPosts(sortType, page);
   };
 
   return (
@@ -160,22 +193,73 @@ export function CommunitySection({ initialPosts, initialTotal }: CommunitySectio
                     <span>{formatRelativeTime(post.created_at)}</span>
                   </div>
                 </div>
-                <ChevronRight className="w-4 h-4 text-muted-foreground flex-shrink-0 mt-2 transition-transform group-hover:translate-x-0.5" />
+                {post.media && post.media.length > 0 && (
+                  <div className="flex-shrink-0 w-12 h-12 rounded-lg overflow-hidden bg-muted">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={post.media[0].thumbnail_url ?? post.media[0].url}
+                      alt=""
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                )}
               </div>
             </Link>
           ))
         )}
       </div>
 
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-center gap-1 mt-4">
+          <button
+            type="button"
+            onClick={() => handlePageChange(currentPage - 1)}
+            disabled={currentPage === 1 || loading}
+            className="p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors disabled:opacity-30 disabled:pointer-events-none"
+          >
+            <ChevronLeft className="w-4 h-4" />
+          </button>
+          {getPageNumbers(currentPage, totalPages).map((page, i) =>
+            page === "..." ? (
+              <span key={`dots-${i}`} className="px-1 text-xs text-muted-foreground">
+                ...
+              </span>
+            ) : (
+              <button
+                key={page}
+                type="button"
+                onClick={() => handlePageChange(page as number)}
+                disabled={loading}
+                className={`min-w-[28px] h-7 rounded-md text-xs font-medium transition-colors ${
+                  currentPage === page
+                    ? "bg-primary text-primary-foreground"
+                    : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                }`}
+              >
+                {page}
+              </button>
+            )
+          )}
+          <button
+            type="button"
+            onClick={() => handlePageChange(currentPage + 1)}
+            disabled={currentPage === totalPages || loading}
+            className="p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors disabled:opacity-30 disabled:pointer-events-none"
+          >
+            <ChevronRight className="w-4 h-4" />
+          </button>
+        </div>
+      )}
+
       {/* Write Button */}
-      <button
-        type="button"
-        onClick={() => alert("커뮤니티 글쓰기 기능은 준비중입니다.")}
+      <Link
+        href="/community/new"
         className="flex items-center justify-center gap-1 w-full mt-4 py-2.5 bg-muted/50 hover:bg-muted text-sm text-muted-foreground hover:text-foreground rounded-xl transition-all"
       >
         <MessageSquare className="w-4 h-4" />
         글쓰기
-      </button>
+      </Link>
     </div>
   );
 }

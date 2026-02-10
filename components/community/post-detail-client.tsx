@@ -2,9 +2,11 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Eye, ThumbsUp } from "lucide-react";
+import { ArrowLeft, Eye, ThumbsUp, Trash2 } from "lucide-react";
+import { useSession } from "next-auth/react";
+import { toast } from "sonner";
 
-import { likePost, unlikePost } from "@/lib/api";
+import { likePost, unlikePost, deletePost } from "@/lib/api";
 import { formatRelativeTime } from "@/lib/utils/format";
 import { CommentSection } from "./comment-section";
 import type { PostResponse, CommentTreeResponse } from "@/generated/openapi-client/types.gen";
@@ -16,8 +18,26 @@ interface PostDetailClientProps {
 
 export function PostDetailClient({ post, initialComments }: PostDetailClientProps) {
   const router = useRouter();
+  const { data: session } = useSession();
   const [isLiked, setIsLiked] = useState(post.is_liked ?? false);
   const [likeCount, setLikeCount] = useState(post.like_count ?? 0);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const isOwner = session?.user?.id === post.user_id;
+
+  const handleDelete = async () => {
+    if (!confirm("게시글을 삭제하시겠습니까?")) return;
+
+    setIsDeleting(true);
+    const { error } = await deletePost(post.id);
+    if (error) {
+      toast.error("게시글 삭제에 실패했습니다.");
+      setIsDeleting(false);
+    } else {
+      toast.success("게시글이 삭제되었습니다.");
+      router.push("/community");
+    }
+  };
 
   const handleLikeToggle = async () => {
     const prevLiked = isLiked;
@@ -38,15 +58,28 @@ export function PostDetailClient({ post, initialComments }: PostDetailClientProp
 
   return (
     <div className="px-4 py-4">
-      {/* Back button */}
-      <button
-        type="button"
-        onClick={() => router.back()}
-        className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors mb-4"
-      >
-        <ArrowLeft className="w-4 h-4" />
-        뒤로가기
-      </button>
+      {/* Top bar */}
+      <div className="flex items-center justify-between mb-4">
+        <button
+          type="button"
+          onClick={() => router.back()}
+          className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          뒤로가기
+        </button>
+        {isOwner && (
+          <button
+            type="button"
+            onClick={handleDelete}
+            disabled={isDeleting}
+            className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-destructive transition-colors disabled:opacity-50"
+          >
+            <Trash2 className="w-4 h-4" />
+            <span>{isDeleting ? "삭제 중..." : "삭제"}</span>
+          </button>
+        )}
+      </div>
 
       {/* Post title */}
       <h1 className="text-lg font-bold text-foreground mb-2">{post.title}</h1>
