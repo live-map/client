@@ -24,7 +24,7 @@ export async function signInWithCredentials(formData: FormData): Promise<ActionR
     await nextAuthSignIn("credentials", {
       email,
       password,
-      redirectTo: "/items",
+      redirectTo: "/",
     });
 
     return { data: null };
@@ -43,7 +43,7 @@ export async function signInWithCredentials(formData: FormData): Promise<ActionR
  * OAuth 로그인 (Google, Discord)
  */
 export async function signInWithOAuth(provider: "google" | "discord"): Promise<void> {
-  await nextAuthSignIn(provider, { redirectTo: "/items" });
+  await nextAuthSignIn(provider, { redirectTo: "/" });
 }
 
 /**
@@ -86,7 +86,7 @@ export async function register(formData: FormData): Promise<ActionResult> {
     await nextAuthSignIn("credentials", {
       email,
       password,
-      redirectTo: "/items",
+      redirectTo: "/",
     });
 
     return { data: null };

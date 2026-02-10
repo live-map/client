@@ -14,8 +14,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Boilerplate",
-  description: "Next.js Full-Stack Boilerplate",
+  title: "Grapoll",
+  description: "실시간 여론조사에 참여하고 의견을 나눠보세요",
 };
 
 export default function RootLayout({
