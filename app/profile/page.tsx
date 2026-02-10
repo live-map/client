@@ -19,8 +19,8 @@ export default async function ProfilePage() {
       where: { id },
       select: { createdAt: true },
     }),
-    getPostList({ query: { user_id: id, limit: 1 } }),
-    getCommentList({ query: { user_id: id, limit: 1 } }),
+    getPostList(1, 0, undefined, id),
+    getCommentList(undefined, id, 1),
   ]);
 
   const postCount = postsResult.data?.total ?? 0;

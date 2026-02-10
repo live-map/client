@@ -164,6 +164,7 @@ export type {
   RootGetResponses,
   ScanRequest,
   ScanResponse,
+  SortType,
   StartInvestigationApiV1AgentInvestigatePostData,
   StartInvestigationApiV1AgentInvestigatePostError,
   StartInvestigationApiV1AgentInvestigatePostErrors,

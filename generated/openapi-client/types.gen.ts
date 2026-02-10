@@ -606,6 +606,10 @@ export type PostResponse = {
    */
   like_count?: number;
   /**
+   * View Count
+   */
+  view_count?: number;
+  /**
    * Is Liked
    */
   is_liked?: boolean;
@@ -738,6 +742,20 @@ export type ScanResponse = {
     [key: string]: unknown;
   }>;
 };
+
+/**
+ * SortType
+ *
+ * 게시글 정렬 기준.
+ */
+export type SortType =
+  | "popular"
+  | "newest"
+  | "most_viewed"
+  | "most_liked"
+  | "daily_hot"
+  | "weekly_hot"
+  | "monthly_hot";
 
 /**
  * ValidationError
@@ -981,6 +999,10 @@ export type ListPostsApiV1PostsGetData = {
      * 특정 사용자의 글만 조회
      */
     user_id?: string | null;
+    /**
+     * 정렬 기준
+     */
+    sort?: SortType;
   };
   url: "/api/v1/posts";
 };
