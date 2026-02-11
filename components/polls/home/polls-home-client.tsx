@@ -37,7 +37,7 @@ export function PollsHomeClient({ polls, hotDebate, suggested }: PollsHomeClient
   };
 
   const handleCreatePoll = () => {
-    router.push("/polls/suggest/create");
+    router.push("/polls/suggest/new");
   };
 
   // API PollCardData → PollList component props
