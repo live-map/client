@@ -16,6 +16,14 @@ import {
   Trash2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { toast } from "sonner";
 import type { PollWithDetails, UserVoteData, PollCommentData } from "@/app/actions/polls/queries";
 import {
@@ -306,6 +314,11 @@ export function PollDetailClient({
   const [commentText, setCommentText] = useState("");
   const [replyingTo, setReplyingTo] = useState<string | null>(null);
   const [replyText, setReplyText] = useState("");
+  const [confirmDialog, setConfirmDialog] = useState<{
+    title: string;
+    description: string;
+    onConfirm: () => void;
+  } | null>(null);
 
   // 조회수 증가
   useEffect(() => {
@@ -452,28 +465,40 @@ export function PollDetailClient({
   };
 
   const handleDeleteComment = (commentId: string) => {
-    if (!confirm("댓글을 삭제하시겠습니까?")) return;
-    startTransition(async () => {
-      const result = await deletePollComment(poll.id, commentId);
-      if (result.error) {
-        toast.error(result.error);
-        return;
-      }
-      toast.success("댓글이 삭제되었습니다");
-      router.refresh();
+    setConfirmDialog({
+      title: "댓글 삭제",
+      description: "댓글을 삭제하시겠습니까?",
+      onConfirm: () => {
+        setConfirmDialog(null);
+        startTransition(async () => {
+          const result = await deletePollComment(poll.id, commentId);
+          if (result.error) {
+            toast.error(result.error);
+            return;
+          }
+          toast.success("댓글이 삭제되었습니다");
+          router.refresh();
+        });
+      },
     });
   };
 
   const handleDelete = () => {
-    if (!confirm("정말 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.")) return;
-    startTransition(async () => {
-      const result = await deletePoll(poll.id);
-      if (result.error) {
-        toast.error(result.error);
-        return;
-      }
-      toast.success("여론조사가 삭제되었습니다");
-      router.push("/polls");
+    setConfirmDialog({
+      title: "여론조사 삭제",
+      description: "정말 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.",
+      onConfirm: () => {
+        setConfirmDialog(null);
+        startTransition(async () => {
+          const result = await deletePoll(poll.id);
+          if (result.error) {
+            toast.error(result.error);
+            return;
+          }
+          toast.success("여론조사가 삭제되었습니다");
+          router.push("/polls");
+        });
+      },
     });
   };
 
@@ -822,7 +847,7 @@ export function PollDetailClient({
       {renderResultsUI()}
 
       {/* Comments Section */}
-      {hasVoted && topLevelComments.length > 0 && (
+      {topLevelComments.length > 0 && (
         <section className="px-4 mt-6">
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-sm font-semibold text-foreground">
@@ -957,6 +982,24 @@ export function PollDetailClient({
           </div>
         )}
       </div>
+
+      {/* Confirm Dialog */}
+      <Dialog open={!!confirmDialog} onOpenChange={(open) => !open && setConfirmDialog(null)}>
+        <DialogContent className="max-w-xs rounded-xl">
+          <DialogHeader>
+            <DialogTitle>{confirmDialog?.title}</DialogTitle>
+            <DialogDescription>{confirmDialog?.description}</DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex-row gap-2">
+            <Button variant="outline" className="flex-1" onClick={() => setConfirmDialog(null)}>
+              취소
+            </Button>
+            <Button variant="destructive" className="flex-1" onClick={confirmDialog?.onConfirm}>
+              삭제
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

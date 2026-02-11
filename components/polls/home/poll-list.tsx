@@ -37,7 +37,16 @@ export function PollList({ polls, onPollClick }: PollListProps) {
 
   const filteredPolls = polls
     .filter((poll) => poll.title.toLowerCase().includes(searchQuery.toLowerCase()))
-    .filter((poll) => categoryFilter === "전체" || poll.category === categoryFilter);
+    .filter((poll) => categoryFilter === "전체" || poll.category === categoryFilter)
+    .sort((a, b) => {
+      if (sortType === "popular") return b.totalVotes - a.totalVotes;
+      if (sortType === "latest")
+        return new Date(b.createdAt ?? 0).getTime() - new Date(a.createdAt ?? 0).getTime();
+      // "ending" — nearest endDate first, no endDate goes last
+      const aEnd = a.endDate ? new Date(a.endDate).getTime() : Infinity;
+      const bEnd = b.endDate ? new Date(b.endDate).getTime() : Infinity;
+      return aEnd - bEnd;
+    });
 
   return (
     <section className="px-4 py-3">
