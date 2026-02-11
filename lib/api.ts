@@ -145,10 +145,6 @@ export const getUserVote = async (pollId: string) => {
   return apiFetch(`/api/v1/polls/${pollId}/vote`);
 };
 
-export const getPollComments = async (pollId: string) => {
-  return apiFetch(`/api/v1/polls/${pollId}/comments`);
-};
-
 export const createPollComment = async (pollId: string, body: Record<string, unknown>) => {
   return apiFetch(`/api/v1/polls/${pollId}/comments`, {
     method: "POST",
