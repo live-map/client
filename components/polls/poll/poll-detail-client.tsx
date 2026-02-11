@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { useState, useEffect, useTransition } from "react";
+import { useState, useEffect, useRef, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import {
@@ -270,6 +270,19 @@ export function PollDetailClient({
   const { openLoginModal } = useLoginModal();
   const [isPending, startTransition] = useTransition();
   const [showMenu, setShowMenu] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  // 케밥 메뉴 외부 클릭 시 닫기
+  useEffect(() => {
+    if (!showMenu) return;
+    const handleMouseDown = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setShowMenu(false);
+      }
+    };
+    document.addEventListener("mousedown", handleMouseDown);
+    return () => document.removeEventListener("mousedown", handleMouseDown);
+  }, [showMenu]);
 
   const isAuthor = currentUserId != null && currentUserId === poll.userId;
   const [isExpired] = useState(
@@ -603,11 +616,21 @@ export function PollDetailClient({
             <span className="text-sm">뒤로</span>
           </button>
           <div className="flex items-center gap-1">
-            <button type="button" className="p-2 hover:bg-muted rounded-full transition-colors">
+            <button
+              type="button"
+              className="p-2 hover:bg-muted rounded-full transition-colors"
+              onClick={() => {
+                const url = `${window.location.origin}/polls/${poll.id}`;
+                navigator.clipboard.writeText(url).then(
+                  () => toast.success("링크가 복사되었습니다"),
+                  () => toast.error("링크 복사에 실패했습니다")
+                );
+              }}
+            >
               <Share2 className="w-5 h-5 text-muted-foreground" />
             </button>
             {isAuthor && (
-              <div className="relative">
+              <div className="relative" ref={menuRef}>
                 <button
                   type="button"
                   onClick={() => setShowMenu(!showMenu)}
