@@ -19,10 +19,15 @@ export default function SuggestionsPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    getSuggestedPolls(50).then((data) => {
-      setPolls(data);
-      setLoading(false);
-    });
+    getSuggestedPolls(50)
+      .then((data) => {
+        setPolls(data);
+        setLoading(false);
+      })
+      .catch(() => {
+        setPolls([]);
+        setLoading(false);
+      });
   }, []);
 
   const sortOptions: { value: SortType; label: string }[] = [

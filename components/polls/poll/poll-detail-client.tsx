@@ -284,7 +284,7 @@ export function PollDetailClient({
     return () => document.removeEventListener("mousedown", handleMouseDown);
   }, [showMenu]);
 
-  const isAuthor = currentUserId != null && currentUserId === poll.userId;
+  const isAuthor = currentUserId != null && poll.userId != null && currentUserId === poll.userId;
   const [isExpired] = useState(
     () =>
       poll.status === "CLOSED" ||
