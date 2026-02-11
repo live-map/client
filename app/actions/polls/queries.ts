@@ -78,6 +78,7 @@ export type PollWithDetails = {
   viewCount: number;
   createdAt: string;
   endsAt: string | null;
+  startsAt: string | null;
   userId: string;
   aiContent: string | null;
   aiUpdatedAt: string | null;
