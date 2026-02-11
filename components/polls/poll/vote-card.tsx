@@ -236,6 +236,7 @@ export function VoteCard({ poll, isOpen, onClose, isLoggedIn, userVote }: VoteCa
               selectedOptions={selectedOptions}
               sliderValue={sliderValue}
               ranking={ranking}
+              averageSliderValue={poll.averageSliderValue}
             />
           )}
 
@@ -411,6 +412,7 @@ interface ResultViewProps {
   selectedOptions: string[];
   sliderValue: number;
   ranking: string[];
+  averageSliderValue?: number | null;
 }
 
 function ResultView({
@@ -422,6 +424,7 @@ function ResultView({
   selectedOptions,
   sliderValue,
   ranking,
+  averageSliderValue,
 }: ResultViewProps) {
   switch (interactionType) {
     case "BINARY":
@@ -448,6 +451,7 @@ function ResultView({
           options={options}
           totalVotes={totalVotes}
           userSliderValue={userVote?.sliderValue ?? sliderValue}
+          averageSliderValue={averageSliderValue ?? null}
         />
       );
     case "MULTIPLE_CHOICE":
@@ -670,15 +674,16 @@ function SliderResult({
   options,
   totalVotes,
   userSliderValue,
+  averageSliderValue,
 }: {
   options: PollWithDetails["options"];
   totalVotes: number;
   userSliderValue: number;
+  averageSliderValue: number | null;
 }) {
   const leftLabel = options[0]?.text ?? "0";
   const rightLabel = options[1]?.text ?? "100";
-  // For demo purposes, show the user's value + fake average
-  const fakeAverage = 52;
+  const average = averageSliderValue ?? userSliderValue;
 
   return (
     <div className="mb-6">
@@ -691,12 +696,12 @@ function SliderResult({
           </div>
           <div className="text-center">
             <p className="text-xs text-muted-foreground">평균</p>
-            <p className="text-2xl font-bold text-foreground">{fakeAverage}</p>
+            <p className="text-2xl font-bold text-foreground">{average}</p>
           </div>
         </div>
 
         <div className="relative h-3 w-full overflow-hidden rounded-full bg-muted">
-          <div className="h-full rounded-full bg-primary/30" style={{ width: `${fakeAverage}%` }} />
+          <div className="h-full rounded-full bg-primary/30" style={{ width: `${average}%` }} />
           {/* User marker */}
           <div
             className="absolute top-1/2 h-5 w-5 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-primary bg-background shadow"

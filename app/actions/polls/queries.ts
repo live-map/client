@@ -95,6 +95,7 @@ export type PollWithDetails = {
   }[];
   comments: PollCommentData[];
   user: { id: string | null; name: string | null; image: string | null } | null;
+  averageSliderValue: number | null;
 };
 
 export type UserVoteData = {
