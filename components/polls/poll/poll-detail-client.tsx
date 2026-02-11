@@ -272,11 +272,16 @@ export function PollDetailClient({
   const [showMenu, setShowMenu] = useState(false);
 
   const isAuthor = currentUserId != null && currentUserId === poll.userId;
+  const [isExpired] = useState(
+    () =>
+      poll.status === "CLOSED" ||
+      (poll.endsAt != null && new Date(poll.endsAt).getTime() < Date.now())
+  );
 
   const pollType = INTERACTION_TYPE_TO_POLL_TYPE[poll.interactionType] || "multiple";
   const uiOptions = mapOptionsToUI(poll.options, poll.totalVotes);
 
-  const [hasVoted, setHasVoted] = useState(!!userVote);
+  const [hasVoted, setHasVoted] = useState(!!userVote || isExpired);
   const [selectedValue, setSelectedValue] = useState<string | string[] | number | null>(
     getSelectedValueFromVote(userVote, poll.interactionType)
   );
@@ -654,11 +659,18 @@ export function PollDetailClient({
           <div className="absolute inset-0 bg-gradient-to-t from-background via-background/50 to-transparent" />
         </div>
         <div className="px-4 -mt-16 relative z-10">
-          {poll.category && (
-            <span className="inline-block text-xs font-medium text-primary bg-primary/10 px-2 py-1 rounded mb-2">
-              {poll.category}
-            </span>
-          )}
+          <div className="flex items-center gap-2 mb-2">
+            {poll.category && (
+              <span className="inline-block text-xs font-medium text-primary bg-primary/10 px-2 py-1 rounded">
+                {poll.category}
+              </span>
+            )}
+            {isExpired && (
+              <span className="inline-block text-xs font-medium text-destructive bg-destructive/10 px-2 py-1 rounded">
+                마감됨
+              </span>
+            )}
+          </div>
           <h1 className="text-xl font-bold text-foreground leading-tight text-balance">
             {poll.title}
           </h1>
@@ -792,6 +804,7 @@ export function PollDetailClient({
                     />
                   )}
                   <span className="text-xs text-muted-foreground">
+                    {isExpired && !selectedValue && "마감된 여론조사입니다"}
                     {typeof selectedValue === "string" && getOptionLabel(selectedValue) && (
                       <>
                         <span className="font-medium text-foreground">
@@ -815,13 +828,15 @@ export function PollDetailClient({
                       </>
                     )}
                   </span>
-                  <button
-                    type="button"
-                    onClick={() => setVoteBarExpanded(true)}
-                    className="ml-auto text-[11px] text-primary hover:underline flex-shrink-0"
-                  >
-                    변경
-                  </button>
+                  {!isExpired && (
+                    <button
+                      type="button"
+                      onClick={() => setVoteBarExpanded(true)}
+                      className="ml-auto text-[11px] text-primary hover:underline flex-shrink-0"
+                    >
+                      변경
+                    </button>
+                  )}
                 </div>
 
                 {/* 댓글 입력 */}
