@@ -1,5 +1,7 @@
 "use server";
 
+import { cookies } from "next/headers";
+
 import {
   listPostsApiV1PostsGet,
   getPostApiV1PostsPostIdGet,
@@ -40,25 +42,46 @@ import type {
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
+const AUTH_COOKIE_NAME =
+  process.env.NODE_ENV === "production" ? "__Secure-authjs.session-token" : "authjs.session-token";
+
+async function getAuthToken(): Promise<string | null> {
+  try {
+    const cookieStore = await cookies();
+    return cookieStore.get(AUTH_COOKIE_NAME)?.value ?? null;
+  } catch {
+    return null;
+  }
+}
+
 async function apiFetch<T>(
   path: string,
   options?: RequestInit
-): Promise<{ data: T | null; error: string | null }> {
+): Promise<{ data: T | null; error: string | null; status?: number }> {
   try {
+    const token = await getAuthToken();
+    const headers: Record<string, string> = {
+      "Content-Type": "application/json",
+      ...(options?.headers as Record<string, string>),
+    };
+    if (token) {
+      headers["Authorization"] = `Bearer ${token}`;
+    }
+
     const res = await fetch(`${API_BASE}${path}`, {
-      headers: { "Content-Type": "application/json", ...options?.headers },
       ...options,
+      headers,
     });
     if (!res.ok) {
       const body = await res.json().catch(() => ({}));
-      return { data: null, error: body.detail || `HTTP ${res.status}` };
+      return { data: null, error: body.detail || `HTTP ${res.status}`, status: res.status };
     }
     // 204 No Content
     if (res.status === 204) {
-      return { data: null as T, error: null };
+      return { data: null as T, error: null, status: 204 };
     }
     const data = await res.json();
-    return { data, error: null };
+    return { data, error: null, status: res.status };
   } catch (e) {
     return { data: null, error: String(e) };
   }

@@ -55,9 +55,55 @@ export type HotDebateData = {
   }[];
 };
 
-export type PollWithDetails = Record<string, unknown>;
-export type PollCommentWithDetails = Record<string, unknown>;
-export type UserVoteData = Record<string, unknown>;
+export type PollCommentData = {
+  id: string;
+  content: string;
+  likes: number;
+  userId: string;
+  pollId: string;
+  parentId: string | null;
+  optionId: string | null;
+  createdAt: string;
+  updatedAt: string;
+  user: { id: string; name: string | null; image: string | null } | null;
+  option: { id: string; text: string } | null;
+  replies?: PollCommentData[];
+};
+
+export type PollWithDetails = {
+  id: string;
+  title: string;
+  description: string | null;
+  imageUrl: string | null;
+  category: string | null;
+  type: string;
+  status: string;
+  interactionType: string;
+  totalVotes: number;
+  viewCount: number;
+  createdAt: string;
+  endsAt: string | null;
+  aiContent: string | null;
+  aiUpdatedAt: string | null;
+  options: { id: string; text: string; order: number; voteCount: number }[];
+  sources: {
+    id: string;
+    title: string;
+    url: string;
+    sourceType: string;
+    description: string | null;
+  }[];
+  comments: PollCommentData[];
+  user: { id: string | null; name: string | null; image: string | null } | null;
+};
+
+export type UserVoteData = {
+  id: string;
+  optionId: string | null;
+  sliderValue: number | null;
+  selectedOptionIds: string[] | null;
+  rankingData: string[] | null;
+};
 
 // ========================================
 // Queries (API 호출 + mock fallback)

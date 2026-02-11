@@ -6,13 +6,46 @@ import {
   updatePoll as apiUpdatePoll,
   deletePoll as apiDeletePoll,
   incrementPollViewCount as apiIncrementViewCount,
+  createPollComment as apiCreatePollComment,
 } from "@/lib/api";
 
 // ========================================
 // Types
 // ========================================
 
-type ActionResult<T = null> = { data?: T; error?: string };
+type ActionResult<T = null> = { data?: T; error?: string; status?: number };
+
+// ========================================
+// Error message helpers
+// ========================================
+
+function getVoteErrorMessage(status: number | undefined, fallback: string): string {
+  switch (status) {
+    case 401:
+      return "로그인이 필요합니다";
+    case 409:
+      return "이미 투표하셨습니다";
+    case 404:
+      return "존재하지 않는 여론조사입니다";
+    case 400:
+      return fallback;
+    default:
+      return fallback;
+  }
+}
+
+function getCommentErrorMessage(status: number | undefined, fallback: string): string {
+  switch (status) {
+    case 401:
+      return "로그인이 필요합니다";
+    case 404:
+      return "존재하지 않는 여론조사입니다";
+    case 400:
+      return fallback;
+    default:
+      return fallback;
+  }
+}
 
 // ========================================
 // Mutations (API 호출)
@@ -30,7 +63,7 @@ export async function castVote(dto: {
   rankingData?: string[];
 }): Promise<ActionResult<Record<string, unknown>>> {
   try {
-    const { data, error } = await apiCastVote(dto.pollId, {
+    const { data, error, status } = await apiCastVote(dto.pollId, {
       interactionType: dto.interactionType,
       optionId: dto.optionId,
       sliderValue: dto.sliderValue,
@@ -39,12 +72,32 @@ export async function castVote(dto: {
     });
 
     if (error) {
-      return { error };
+      return { error: getVoteErrorMessage(status, error), status };
     }
 
     return { data: data as Record<string, unknown> };
   } catch {
-    return { error: "투표 처리 중 오류가 발생했습니다." };
+    return { error: "서버 연결에 실패했습니다" };
+  }
+}
+
+/**
+ * 여론조사 댓글 작성
+ */
+export async function createPollComment(
+  pollId: string,
+  dto: { content: string; parentId?: string; optionId?: string }
+): Promise<ActionResult<Record<string, unknown>>> {
+  try {
+    const { data, error, status } = await apiCreatePollComment(pollId, dto);
+
+    if (error) {
+      return { error: getCommentErrorMessage(status, error), status };
+    }
+
+    return { data: data as Record<string, unknown> };
+  } catch {
+    return { error: "서버 연결에 실패했습니다" };
   }
 }
 
