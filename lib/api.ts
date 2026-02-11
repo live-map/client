@@ -1,12 +1,6 @@
 "use server";
 
 import {
-  getFeedsApiV1FeedsGet,
-  getFeedApiV1FeedsFeedIdGet,
-  startInvestigationApiV1AgentInvestigatePost,
-  getInvestigationStatusApiV1AgentStatusInvestigationIdGet,
-  triggerScanApiV1AgentScanPost,
-  listInvestigationsApiV1AgentInvestigationsGet,
   listPostsApiV1PostsGet,
   getPostApiV1PostsPostIdGet,
   createPostApiV1PostsPost,
@@ -37,64 +31,110 @@ import type {
   PostMediaCreate,
   CommentCreate,
   CommentUpdate,
-  InvestigateRequest,
-  ScanRequest,
   PresignedUrlRequest,
 } from "@/generated/openapi-client/types.gen";
 
 // ========================================
-// Feeds
+// Backend Base URL (for poll endpoints until openapi-client is regenerated)
 // ========================================
 
-export const getFeedList = async (
-  category: string,
-  subCategory?: string,
-  limit?: number,
-  offset?: number
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+
+async function apiFetch<T>(
+  path: string,
+  options?: RequestInit
+): Promise<{ data: T | null; error: string | null }> {
+  try {
+    const res = await fetch(`${API_BASE}${path}`, {
+      headers: { "Content-Type": "application/json", ...options?.headers },
+      ...options,
+    });
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({}));
+      return { data: null, error: body.detail || `HTTP ${res.status}` };
+    }
+    // 204 No Content
+    if (res.status === 204) {
+      return { data: null as T, error: null };
+    }
+    const data = await res.json();
+    return { data, error: null };
+  } catch (e) {
+    return { data: null, error: String(e) };
+  }
+}
+
+// ========================================
+// Polls
+// ========================================
+
+export type PollSortMode = "popular" | "recent" | "ending_soon" | "closed";
+
+export const getPollFeed = async (
+  sort: PollSortMode = "popular",
+  search?: string,
+  limit = 20,
+  offset = 0
 ) => {
-  const { data, error } = await getFeedsApiV1FeedsGet({
-    query: { category, subCategory, limit, offset },
-  });
-  return { data, error };
+  const params = new URLSearchParams({ sort, limit: String(limit), offset: String(offset) });
+  if (search) params.set("search", search);
+  return apiFetch(`/api/v1/polls?${params}`);
 };
 
-export const getFeed = async (feedId: number) => {
-  const { data, error } = await getFeedApiV1FeedsFeedIdGet({
-    path: { feed_id: feedId },
-  });
-  return { data, error };
+export const getHotDebate = async () => {
+  return apiFetch("/api/v1/polls/hot-debate");
 };
 
-// ========================================
-// Agent
-// ========================================
-
-export const startInvestigation = async (topic: string, category?: string) => {
-  const { data, error } = await startInvestigationApiV1AgentInvestigatePost({
-    body: { topic, category } as InvestigateRequest,
-  });
-  return { data, error };
+export const getSuggestedPolls = async (limit = 10) => {
+  return apiFetch(`/api/v1/polls/suggested?limit=${limit}`);
 };
 
-export const getInvestigationStatus = async (investigationId: string) => {
-  const { data, error } = await getInvestigationStatusApiV1AgentStatusInvestigationIdGet({
-    path: { investigation_id: investigationId },
-  });
-  return { data, error };
+export const getPollById = async (pollId: string) => {
+  return apiFetch(`/api/v1/polls/${pollId}`);
 };
 
-export const triggerScan = async (sources?: string[], keywords?: string[]) => {
-  const { data, error } = await triggerScanApiV1AgentScanPost({
-    body: { sources, keywords } as ScanRequest,
+export const createPoll = async (body: Record<string, unknown>) => {
+  return apiFetch("/api/v1/polls", {
+    method: "POST",
+    body: JSON.stringify(body),
   });
-  return { data, error };
 };
 
-export const listInvestigations = async (status?: string, limit?: number) => {
-  const { data, error } = await listInvestigationsApiV1AgentInvestigationsGet({
-    query: { status, limit },
+export const updatePoll = async (pollId: string, body: Record<string, unknown>) => {
+  return apiFetch(`/api/v1/polls/${pollId}`, {
+    method: "PATCH",
+    body: JSON.stringify(body),
   });
-  return { data, error };
+};
+
+export const deletePoll = async (pollId: string) => {
+  return apiFetch(`/api/v1/polls/${pollId}`, { method: "DELETE" });
+};
+
+export const castVote = async (pollId: string, body: Record<string, unknown>) => {
+  return apiFetch(`/api/v1/polls/${pollId}/vote`, {
+    method: "POST",
+    body: JSON.stringify(body),
+  });
+};
+
+export const getUserVote = async (pollId: string) => {
+  return apiFetch(`/api/v1/polls/${pollId}/vote`);
+};
+
+export const getPollComments = async (pollId: string) => {
+  return apiFetch(`/api/v1/polls/${pollId}/comments`);
+};
+
+export const createPollComment = async (pollId: string, body: Record<string, unknown>) => {
+  return apiFetch(`/api/v1/polls/${pollId}/comments`, {
+    method: "POST",
+    body: JSON.stringify(body),
+  });
+};
+
+export const incrementPollViewCount = async (pollId: string) => {
+  return apiFetch(`/api/v1/polls/${pollId}/view`, { method: "POST" });
 };
 
 // ========================================
