@@ -189,7 +189,7 @@ function MarkdownRenderer({ content }: { content: string }) {
 const INTERACTION_TYPE_TO_POLL_TYPE: Record<string, PollType> = {
   BINARY: "binary",
   SINGLE_CHOICE: "multiple",
-  MULTI_SELECT: "checkbox",
+  MULTIPLE_CHOICE: "checkbox",
   SLIDER: "scale",
   RANKING: "ranking",
   YES_NO: "yesno",
@@ -217,7 +217,7 @@ function getSelectedValueFromVote(
   switch (interactionType) {
     case "SLIDER":
       return userVote.sliderValue;
-    case "MULTI_SELECT":
+    case "MULTIPLE_CHOICE":
       return userVote.selectedOptionIds;
     case "RANKING":
       return userVote.rankingData;
@@ -330,7 +330,7 @@ export function PollDetailClient({
 
       if (poll.interactionType === "SLIDER") {
         dto.sliderValue = voteValue as number;
-      } else if (poll.interactionType === "MULTI_SELECT") {
+      } else if (poll.interactionType === "MULTIPLE_CHOICE") {
         dto.selectedOptionIds = voteValue as string[];
       } else if (poll.interactionType === "RANKING") {
         dto.rankingData = voteValue as string[];
@@ -498,7 +498,7 @@ export function PollDetailClient({
     const optId = comment.optionId;
     const color = optId ? getOptionColor(optId) : "#888";
     const label = optId ? getOptionLabel(optId) : undefined;
-    const userName = comment.user?.name || "익명";
+    const userName = comment.userName || "익명";
 
     return (
       <div key={comment.id} className={`flex gap-2${isReply ? "" : ".5"}`}>

@@ -57,9 +57,11 @@ export type PollCommentData = {
   parentId: string | null;
   optionId: string | null;
   createdAt: string;
-  updatedAt: string;
-  user: { id: string; name: string | null; image: string | null } | null;
-  option: { id: string; text: string } | null;
+  updatedAt: string | null;
+  userName: string | null;
+  userImage: string | null;
+  isDeleted: boolean;
+  depth: number;
   replies?: PollCommentData[];
 };
 
