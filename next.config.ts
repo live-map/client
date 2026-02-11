@@ -20,11 +20,6 @@ const nextConfig: NextConfig = {
       },
       {
         protocol: "https",
-        hostname: "cdn.discordapp.com", // Discord OAuth
-        pathname: "/**",
-      },
-      {
-        protocol: "https",
         hostname: "k.kakaocdn.net", // Kakao OAuth
         pathname: "/**",
       },

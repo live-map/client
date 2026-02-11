@@ -2,6 +2,7 @@
 
 import { SessionProvider } from "next-auth/react";
 import { Toaster } from "@/components/ui/sonner";
+import { LoginModalProvider } from "@/components/auth/login-modal";
 
 interface ProvidersProps {
   children: React.ReactNode;
@@ -10,8 +11,10 @@ interface ProvidersProps {
 export function Providers({ children }: ProvidersProps) {
   return (
     <SessionProvider>
-      {children}
-      <Toaster position="top-center" richColors />
+      <LoginModalProvider>
+        {children}
+        <Toaster position="top-center" richColors />
+      </LoginModalProvider>
     </SessionProvider>
   );
 }
