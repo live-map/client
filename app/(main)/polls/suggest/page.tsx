@@ -1,107 +1,50 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
-import { ArrowLeft, Search, ThumbsUp, MessageSquare, Plus } from "lucide-react";
+import { useState, useEffect } from "react";
+import { ArrowLeft, Search, Users, Clock, Plus } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { getSuggestedPolls } from "@/app/actions/polls/queries";
+import type { PollCardData } from "@/app/actions/polls/queries";
 
 type SortType = "popular" | "recent";
 
-interface Suggestion {
-  id: string;
-  title: string;
-  category: string;
-  author: string;
-  likes: number;
-  comments: number;
-  createdAt: string;
-}
-
 const categoryFilters = ["전체", "정치", "경제", "사회", "IT/기술", "문화", "스포츠"];
-
-// Mock data generator
-const generateSuggestions = (page: number): Suggestion[] => {
-  const items = [
-    { title: "국가위기관리단 신설, 어떻게 생각하시나요?", category: "정치" },
-    { title: "공무원 정년 연장에 대한 찬반 의견이 궁금합니다", category: "사회" },
-    { title: "주 4일제 도입, 현실적으로 가능할까요?", category: "경제" },
-    { title: "대학 등록금 동결 정책에 대한 의견", category: "사회" },
-    { title: "청년 주거 정책 개선 방안", category: "경제" },
-    { title: "의료 민영화에 대한 찬반", category: "사회" },
-    { title: "AI 규제 법안 필요성에 대해", category: "IT/기술" },
-    { title: "K-POP 해외 진출 지원 정책", category: "문화" },
-    { title: "프로야구 시즌 확대 논의", category: "스포츠" },
-    { title: "스타트업 지원 정책 효과", category: "경제" },
-  ];
-  const authors = ["익명의사용자", "투표마니아", "정치관심러", "민주시민", "여론왕"];
-
-  return Array.from({ length: 10 }, (_, i) => ({
-    id: `suggestion-${page}-${i}`,
-    title: items[i % items.length].title,
-    category: items[i % items.length].category,
-    author: authors[i % authors.length],
-    likes: Math.floor(Math.random() * 3000) + 100,
-    comments: Math.floor(Math.random() * 500) + 10,
-    createdAt: `${Math.floor(Math.random() * 24) + 1}시간 전`,
-  }));
-};
 
 export default function SuggestionsPage() {
   const [sortType, setSortType] = useState<SortType>("popular");
   const [categoryFilter, setCategoryFilter] = useState("전체");
   const [searchQuery, setSearchQuery] = useState("");
-  const [suggestions, setSuggestions] = useState<Suggestion[]>(() => generateSuggestions(1));
-  const [page, setPage] = useState(1);
-  const [loading, setLoading] = useState(false);
-  const [hasMore, setHasMore] = useState(true);
-  const observerRef = useRef<IntersectionObserver | null>(null);
-  const loadMoreRef = useRef<HTMLDivElement | null>(null);
+  const [polls, setPolls] = useState<PollCardData[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  // Load more function
-  const loadMore = useCallback(() => {
-    if (loading || !hasMore) return;
-
-    setLoading(true);
-    setTimeout(() => {
-      const newSuggestions = generateSuggestions(page + 1);
-      if (page >= 5) {
-        setHasMore(false);
-      } else {
-        setSuggestions((prev) => [...prev, ...newSuggestions]);
-        setPage((prev) => prev + 1);
-      }
-      setLoading(false);
-    }, 500);
-  }, [loading, hasMore, page]);
-
-  // Intersection Observer for infinite scroll
   useEffect(() => {
-    if (observerRef.current) observerRef.current.disconnect();
-
-    observerRef.current = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting && hasMore && !loading) {
-          loadMore();
-        }
-      },
-      { threshold: 0.1 }
-    );
-
-    if (loadMoreRef.current) {
-      observerRef.current.observe(loadMoreRef.current);
-    }
-
-    return () => observerRef.current?.disconnect();
-  }, [hasMore, loading, loadMore]);
+    getSuggestedPolls(50).then((data) => {
+      setPolls(data);
+      setLoading(false);
+    });
+  }, []);
 
   const sortOptions: { value: SortType; label: string }[] = [
     { value: "popular", label: "추천순" },
     { value: "recent", label: "최신순" },
   ];
 
-  const filteredSuggestions = suggestions
-    .filter((s) => s.title.toLowerCase().includes(searchQuery.toLowerCase()))
-    .filter((s) => categoryFilter === "전체" || s.category === categoryFilter);
+  const filtered = polls
+    .filter((p) => !searchQuery || p.title.toLowerCase().includes(searchQuery.toLowerCase()))
+    .filter((p) => categoryFilter === "전체" || p.category === categoryFilter)
+    .sort((a, b) => {
+      if (sortType === "recent") {
+        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+      }
+      return b.totalVotes - a.totalVotes;
+    });
+
+  const formatEndDate = (endsAt: Date | string | null) => {
+    if (!endsAt) return null;
+    const d = new Date(endsAt);
+    return `${String(d.getMonth() + 1).padStart(2, "0")}.${String(d.getDate()).padStart(2, "0")}`;
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -141,7 +84,6 @@ export default function SuggestionsPage() {
 
         {/* Sort & Filter */}
         <div className="space-y-2 mb-4">
-          {/* Sort Tabs */}
           <div className="flex gap-2">
             {sortOptions.map((option) => (
               <button
@@ -159,7 +101,6 @@ export default function SuggestionsPage() {
             ))}
           </div>
 
-          {/* Category Filter */}
           <div className="flex gap-1.5 overflow-x-auto scrollbar-hide pb-1">
             {categoryFilters.map((category) => (
               <button
@@ -185,44 +126,47 @@ export default function SuggestionsPage() {
           </p>
         </div>
 
-        {/* Suggestion List */}
+        {/* Poll List */}
         <div className="space-y-2">
-          {filteredSuggestions.map((suggestion, index) => (
-            <button
-              key={suggestion.id}
-              type="button"
-              className="w-full bg-card border border-border rounded-lg p-3 hover:bg-muted/50 transition-colors text-left"
+          {filtered.map((poll, index) => (
+            <Link
+              key={poll.id}
+              href={`/polls/${poll.id}`}
+              className="block w-full bg-card border border-border rounded-lg p-3 hover:bg-muted/50 transition-colors"
             >
               <div className="flex items-start gap-2">
                 <span className="text-muted-foreground font-medium text-xs min-w-[20px]">
                   {index + 1}
                 </span>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm text-foreground line-clamp-2">{suggestion.title}</p>
+                  <p className="text-sm text-foreground line-clamp-2">{poll.title}</p>
                   <div className="flex items-center gap-3 mt-2 text-[11px] text-muted-foreground">
-                    <span>{suggestion.author}</span>
+                    {poll.user?.name && <span>{poll.user.name}</span>}
                     <div className="flex items-center gap-1">
-                      <ThumbsUp className="w-3 h-3" />
-                      <span>{suggestion.likes.toLocaleString()}</span>
+                      <Users className="w-3 h-3" />
+                      <span>{poll.totalVotes.toLocaleString()}</span>
                     </div>
-                    <div className="flex items-center gap-1">
-                      <MessageSquare className="w-3 h-3" />
-                      <span>{suggestion.comments}</span>
-                    </div>
-                    <span>{suggestion.createdAt}</span>
+                    {poll.endsAt && (
+                      <div className="flex items-center gap-1">
+                        <Clock className="w-3 h-3" />
+                        <span>~{formatEndDate(poll.endsAt)}</span>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
-            </button>
+            </Link>
           ))}
         </div>
 
-        {/* Load More Trigger */}
-        <div ref={loadMoreRef} className="py-8 flex justify-center">
+        {/* Loading / Empty */}
+        <div className="py-8 flex justify-center">
           {loading && (
             <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
           )}
-          {!hasMore && <p className="text-sm text-muted-foreground">모든 제안을 불러왔습니다</p>}
+          {!loading && filtered.length === 0 && (
+            <p className="text-sm text-muted-foreground">제안된 여론조사가 없습니다</p>
+          )}
         </div>
       </main>
     </div>
