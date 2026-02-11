@@ -5,7 +5,7 @@ import { ArrowLeft, Search, ThumbsUp, MessageSquare, Plus } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 
-type SortType = "popular" | "latest";
+type SortType = "popular" | "recent";
 
 interface Suggestion {
   id: string;
@@ -96,7 +96,7 @@ export default function SuggestionsPage() {
 
   const sortOptions: { value: SortType; label: string }[] = [
     { value: "popular", label: "추천순" },
-    { value: "latest", label: "최신순" },
+    { value: "recent", label: "최신순" },
   ];
 
   const filteredSuggestions = suggestions

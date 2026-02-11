@@ -16,7 +16,7 @@ import Image from "next/image";
 import Link from "next/link";
 import type { PollType } from "@/components/polls/types/poll-types";
 
-type SortType = "popular" | "latest" | "ending";
+type SortType = "popular" | "recent" | "ending_soon";
 
 interface Poll {
   id: string;
@@ -198,8 +198,8 @@ export default function PollsAllPage() {
 
   const sortOptions: { value: SortType; label: string }[] = [
     { value: "popular", label: "인기순" },
-    { value: "latest", label: "최신순" },
-    { value: "ending", label: "마감임박" },
+    { value: "recent", label: "최신순" },
+    { value: "ending_soon", label: "마감임박" },
   ];
 
   const filteredPolls = polls
