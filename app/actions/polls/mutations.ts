@@ -7,6 +7,8 @@ import {
   deletePoll as apiDeletePoll,
   incrementPollViewCount as apiIncrementViewCount,
   createPollComment as apiCreatePollComment,
+  likePollComment as apiLikePollComment,
+  deletePollComment as apiDeletePollComment,
 } from "@/lib/api";
 
 // ========================================
@@ -175,5 +177,38 @@ export async function incrementViewCount(pollId: string): Promise<void> {
     await apiIncrementViewCount(pollId);
   } catch {
     // 조회수 증가 실패는 무시
+  }
+}
+
+/**
+ * 댓글 좋아요
+ */
+export async function likePollComment(
+  pollId: string,
+  commentId: string
+): Promise<ActionResult<{ likes: number }>> {
+  try {
+    const { data, error, status } = await apiLikePollComment(pollId, commentId);
+    if (error) {
+      return { error: getCommentErrorMessage(status, error), status };
+    }
+    return { data: data as { likes: number } };
+  } catch {
+    return { error: "서버 연결에 실패했습니다" };
+  }
+}
+
+/**
+ * 댓글 삭제
+ */
+export async function deletePollComment(pollId: string, commentId: string): Promise<ActionResult> {
+  try {
+    const { error, status } = await apiDeletePollComment(pollId, commentId);
+    if (error) {
+      return { error: getCommentErrorMessage(status, error), status };
+    }
+    return { data: null };
+  } catch {
+    return { error: "댓글 삭제 중 오류가 발생했습니다" };
   }
 }

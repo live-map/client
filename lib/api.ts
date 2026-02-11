@@ -156,6 +156,18 @@ export const createPollComment = async (pollId: string, body: Record<string, unk
   });
 };
 
+export const likePollComment = async (pollId: string, commentId: string) => {
+  return apiFetch(`/api/v1/polls/${pollId}/comments/${commentId}/like`, {
+    method: "POST",
+  });
+};
+
+export const deletePollComment = async (pollId: string, commentId: string) => {
+  return apiFetch(`/api/v1/polls/${pollId}/comments/${commentId}`, {
+    method: "DELETE",
+  });
+};
+
 export const incrementPollViewCount = async (pollId: string) => {
   return apiFetch(`/api/v1/polls/${pollId}/view`, { method: "POST" });
 };

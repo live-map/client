@@ -23,6 +23,8 @@ import {
   createPollComment,
   incrementViewCount,
   deletePoll,
+  likePollComment,
+  deletePollComment,
 } from "@/app/actions/polls/mutations";
 import { FloatingVoteBar } from "@/components/polls/types/poll-types";
 import type { PollType, PollOption } from "@/components/polls/types/poll-types";
@@ -434,6 +436,34 @@ export function PollDetailClient({
     });
   };
 
+  const handleLikeComment = (commentId: string) => {
+    if (!isLoggedIn) {
+      openLoginModal("좋아요를 누르려면 로그인이 필요합니다");
+      return;
+    }
+    startTransition(async () => {
+      const result = await likePollComment(poll.id, commentId);
+      if (result.error) {
+        toast.error(result.error);
+        return;
+      }
+      router.refresh();
+    });
+  };
+
+  const handleDeleteComment = (commentId: string) => {
+    if (!confirm("댓글을 삭제하시겠습니까?")) return;
+    startTransition(async () => {
+      const result = await deletePollComment(poll.id, commentId);
+      if (result.error) {
+        toast.error(result.error);
+        return;
+      }
+      toast.success("댓글이 삭제되었습니다");
+      router.refresh();
+    });
+  };
+
   const handleDelete = () => {
     if (!confirm("정말 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.")) return;
     startTransition(async () => {
@@ -547,6 +577,7 @@ export function PollDetailClient({
             <button
               type="button"
               className="flex items-center gap-1 hover:text-primary transition-colors"
+              onClick={() => handleLikeComment(comment.id)}
             >
               <ThumbsUp className={iconSize} />
               <span>{comment.likes}</span>
@@ -561,6 +592,15 @@ export function PollDetailClient({
             >
               답글
             </button>
+            {currentUserId && comment.userId === currentUserId && (
+              <button
+                type="button"
+                className="hover:text-destructive transition-colors"
+                onClick={() => handleDeleteComment(comment.id)}
+              >
+                삭제
+              </button>
+            )}
           </div>
 
           {/* 답글 입력 */}
