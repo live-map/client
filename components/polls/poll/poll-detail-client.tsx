@@ -1,15 +1,24 @@
 "use client";
 
 import React from "react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { ArrowLeft, Users, Clock, ExternalLink, ThumbsUp, Share2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import type { PollType } from "@/components/polls/types/poll-types";
-import { ScalePoll, FloatingVoteBar } from "@/components/polls/types/poll-types";
+import { toast } from "sonner";
+import type { PollWithDetails, UserVoteData, PollCommentData } from "@/app/actions/polls/queries";
+import { castVote } from "@/app/actions/polls/mutations";
+import { createPollComment } from "@/app/actions/polls/mutations";
+import { incrementViewCount } from "@/app/actions/polls/mutations";
+import { FloatingVoteBar } from "@/components/polls/types/poll-types";
+import type { PollType, PollOption } from "@/components/polls/types/poll-types";
+import { useLoginModal } from "@/components/auth/login-modal";
 
+// ========================================
 // 인라인 출처 컴포넌트
+// ========================================
+
 function InlineSource({ name, url }: { name: string; url: string }) {
   return (
     <a
@@ -24,7 +33,10 @@ function InlineSource({ name, url }: { name: string; url: string }) {
   );
 }
 
+// ========================================
 // 마크다운 렌더러
+// ========================================
+
 function MarkdownRenderer({ content }: { content: string }) {
   const parseMarkdown = (text: string) => {
     const lines = text.split("\n");
@@ -34,7 +46,6 @@ function MarkdownRenderer({ content }: { content: string }) {
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i];
 
-      // 빈 줄은 무시
       if (line.trim() === "") {
         continue;
       }
@@ -52,13 +63,11 @@ function MarkdownRenderer({ content }: { content: string }) {
         }
       }
 
-      // 구분선
       if (line.trim() === "---") {
         elements.push(<hr key={currentIndex++} className="my-4 border-border" />);
         continue;
       }
 
-      // H2 헤딩
       if (line.startsWith("## ")) {
         elements.push(
           <h2
@@ -71,7 +80,6 @@ function MarkdownRenderer({ content }: { content: string }) {
         continue;
       }
 
-      // H3 헤딩
       if (line.startsWith("### ")) {
         elements.push(
           <h3 key={currentIndex++} className="text-sm font-semibold text-foreground mt-3 mb-1.5">
@@ -81,7 +89,6 @@ function MarkdownRenderer({ content }: { content: string }) {
         continue;
       }
 
-      // 이미지
       if (line.startsWith("![")) {
         const match = line.match(/!\[(.*?)\]\((.*?)\)/);
         if (match) {
@@ -101,7 +108,6 @@ function MarkdownRenderer({ content }: { content: string }) {
         }
       }
 
-      // 블록쿼트
       if (line.startsWith("> ")) {
         const quoteLines = [line.replace("> ", "")];
         while (i + 1 < lines.length && lines[i + 1].startsWith("> ")) {
@@ -119,7 +125,6 @@ function MarkdownRenderer({ content }: { content: string }) {
         continue;
       }
 
-      // 리스트 아이템
       if (line.startsWith("- ")) {
         const listItems = [line.replace("- ", "")];
         while (i + 1 < lines.length && lines[i + 1].startsWith("- ")) {
@@ -142,7 +147,6 @@ function MarkdownRenderer({ content }: { content: string }) {
         continue;
       }
 
-      // 일반 텍스트 (단락)
       elements.push(
         <p key={currentIndex++} className="text-sm text-foreground/90 leading-normal mb-2">
           <span dangerouslySetInnerHTML={{ __html: parseInline(line) }} />
@@ -153,246 +157,115 @@ function MarkdownRenderer({ content }: { content: string }) {
     return elements;
   };
 
-  // 인라인 마크다운 파싱 (볼드, 링크 등)
   const parseInline = (text: string) => {
-    return (
-      text
-        // 볼드
-        .replace(/\*\*(.*?)\*\*/g, '<strong class="font-medium text-foreground">$1</strong>')
-        // 링크
-        .replace(
-          /\[(.*?)\]\((.*?)\)/g,
-          '<a href="$2" target="_blank" rel="noopener noreferrer" class="text-primary hover:underline">$1</a>'
-        )
-    );
+    return text
+      .replace(/\*\*(.*?)\*\*/g, '<strong class="font-medium text-foreground">$1</strong>')
+      .replace(
+        /\[(.*?)\]\((.*?)\)/g,
+        '<a href="$2" target="_blank" rel="noopener noreferrer" class="text-primary hover:underline">$1</a>'
+      );
   };
 
   return <article className="prose-custom">{parseMarkdown(content)}</article>;
 }
 
-// 다양한 타입의 여론조사 샘플 데이터
-const pollSamples: Record<
-  string,
-  {
-    id: string;
-    pollType: PollType;
-    title: string;
-    description: string;
-    image: string;
-    category: string;
-    totalVotes: number;
-    endDate: string;
-    options: { id: string; label: string; percent: number; color: string }[];
-    scaleConfig?: {
-      min?: number;
-      max?: number;
-      labels?: { min: string; max: string };
-      results?: { average: number; distribution: number[] };
-    };
-    aiArticle?: {
-      lastUpdated: string;
-      content: string;
-    };
-    comments: {
-      id: string;
-      author: string;
-      content: string;
-      likes: number;
-      createdAt: string;
-      vote: string;
-      replies: {
-        id: string;
-        author: string;
-        content: string;
-        likes: number;
-        createdAt: string;
-        vote: string;
-      }[];
-    }[];
-  }
-> = {
-  // 1. 기본 양자택일 (binary)
-  "1": {
-    id: "1",
-    pollType: "binary",
-    title: "AI 딥페이크 규제, 표현의 자유 vs 피해자 보호 어느 쪽이 우선일까요?",
-    description:
-      "최근 AI 기술의 발전으로 딥페이크 영상이 급증하면서, 규제의 필요성과 표현의 자유 사이의 논쟁이 뜨거워지고 있습니다.",
-    image: "https://images.unsplash.com/photo-1677442136019-21780ecad995?w=800&h=400&fit=crop",
-    category: "IT/기술",
-    totalVotes: 89420,
-    endDate: "2026.03.15",
-    options: [
-      { id: "opt1", label: "표현의 자유 우선", percent: 47.2, color: "#3B82F6" },
-      { id: "opt2", label: "피해자 보호 우선", percent: 52.8, color: "#EC4899" },
-    ],
-    aiArticle: {
-      lastUpdated: "2시간 전",
-      content: `## 딥페이크 피해 현황
+// ========================================
+// Helpers
+// ========================================
 
-2025년 방송통신위원회에 접수된 딥페이크 관련 피해 신고 건수는 전년 대비 **340% 증가**했다. 피해자 성별 비율은 여성 **78%**, 남성 **22%**로 집계됐다.
-[^방송통신위원회|https://kcc.go.kr]
-
----
-
-## 현행 법률
-
-현행 '성폭력처벌법' 제14조의2에 따르면, 성적 목적의 딥페이크 제작 및 배포는 **5년 이하의 징역** 또는 **5천만원 이하의 벌금**에 처해진다.
-[^국가법령정보센터|https://law.go.kr]
-
----
-
-## 규제 강화 측 주요 논거
-
-- 개인의 초상권 및 인격권 침해 우려
-- 금융 사기, 보이스피싱 등 범죄 수단으로 활용 가능성
-- 선거 기간 중 허위 정보 유포 가능성
-[^한국인터넷자율정책기구|https://kiso.or.kr]
-
----
-
-## 규제 완화 측 주요 논거
-
-- AI 기술 연구 및 산업 발전에 제약 가능성
-- 풍자, 패러디 등 합법적 표현 활동 위축 우려
-- 기술 자체보다 악용 행위에 대한 규제가 적절함
-[^한국AI학회|https://aikorea.org]`,
-    },
-    comments: [
-      {
-        id: "c1",
-        author: "법학도",
-        content: "기술 발전을 막을 순 없지만 최소한의 가이드라인은 필요합니다.",
-        likes: 234,
-        createdAt: "2시간 전",
-        vote: "opt2",
-        replies: [
-          {
-            id: "r1",
-            author: "IT개발자",
-            content: "EU 방식이 좋긴 한데, 한국 실정에 맞게 조정이 필요할 것 같아요.",
-            likes: 45,
-            createdAt: "1시간 전",
-            vote: "opt1",
-          },
-        ],
-      },
-      {
-        id: "c2",
-        author: "피해자연대",
-        content: "실제 피해를 겪어보지 않으면 그 고통을 모릅니다. 피해자 보호가 우선입니다.",
-        likes: 312,
-        createdAt: "4시간 전",
-        vote: "opt2",
-        replies: [],
-      },
-    ],
-  },
-
-  // 2. 다지선다 (multiple)
-  "2": {
-    id: "2",
-    pollType: "multiple",
-    title: "2026년 대선에서 가장 중요하게 다뤄져야 할 이슈는?",
-    description: "다가오는 대통령 선거에서 가장 핵심적으로 논의되어야 할 사안을 선택해주세요.",
-    image: "https://images.unsplash.com/photo-1529107386315-e1a2ed48a620?w=800&h=400&fit=crop",
-    category: "정치",
-    totalVotes: 156780,
-    endDate: "2026.04.01",
-    options: [
-      { id: "opt1", label: "경제 성장과 일자리", percent: 32.1, color: "#3B82F6" },
-      { id: "opt2", label: "부동산 및 주거 안정", percent: 24.5, color: "#EC4899" },
-      { id: "opt3", label: "저출산 및 고령화 대응", percent: 18.7, color: "#10B981" },
-      { id: "opt4", label: "외교 및 안보", percent: 14.2, color: "#F59E0B" },
-      { id: "opt5", label: "기후변화 및 환경", percent: 10.5, color: "#8B5CF6" },
-    ],
-    comments: [
-      {
-        id: "c1",
-        author: "30대직장인",
-        content: "솔직히 부동산이 가장 시급합니다. 결혼도 출산도 집이 있어야 가능하잖아요.",
-        likes: 523,
-        createdAt: "1시간 전",
-        vote: "opt2",
-        replies: [],
-      },
-    ],
-  },
-
-  // 4. 척도 (scale)
-  "4": {
-    id: "4",
-    pollType: "scale",
-    title: "현 정부의 경제 정책 만족도를 1~10점으로 평가해주세요",
-    description: "지난 1년간의 경제 정책 전반에 대한 국민 만족도를 조사합니다.",
-    image: "https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=800&h=400&fit=crop",
-    category: "경제",
-    totalVotes: 78340,
-    endDate: "2026.03.25",
-    options: [],
-    scaleConfig: {
-      min: 1,
-      max: 10,
-      labels: { min: "매우 불만족", max: "매우 만족" },
-      results: { average: 5.2, distribution: [8, 12, 15, 18, 22, 20, 16, 10, 6, 3] },
-    },
-    comments: [
-      {
-        id: "c1",
-        author: "자영업자",
-        content: "물가는 오르고 매출은 줄고... 체감 경기는 바닥입니다. 3점 줬어요.",
-        likes: 445,
-        createdAt: "30분 전",
-        vote: "3",
-        replies: [],
-      },
-    ],
-  },
-
-  // 6. 찬반 (yesno)
-  "6": {
-    id: "6",
-    pollType: "yesno",
-    title: "주 4일제 전면 도입에 찬성하십니까?",
-    description: "근로시간 단축과 주 4일제 도입에 대한 국민 여론을 조사합니다.",
-    image: "https://images.unsplash.com/photo-1506784983877-45594efa4cbe?w=800&h=400&fit=crop",
-    category: "사회",
-    totalVotes: 234560,
-    endDate: "2026.04.10",
-    options: [
-      { id: "yes", label: "찬성", percent: 62.4, color: "#10B981" },
-      { id: "no", label: "반대", percent: 37.6, color: "#EF4444" },
-    ],
-    comments: [
-      {
-        id: "c1",
-        author: "워킹맘",
-        content: "아이 돌봄 시간이 늘어나면 출산율에도 긍정적 영향이 있을 거예요. 강력 찬성입니다.",
-        likes: 567,
-        createdAt: "1시간 전",
-        vote: "yes",
-        replies: [],
-      },
-    ],
-  },
+const INTERACTION_TYPE_TO_POLL_TYPE: Record<string, PollType> = {
+  BINARY: "binary",
+  SINGLE_CHOICE: "multiple",
+  MULTI_SELECT: "checkbox",
+  SLIDER: "scale",
+  RANKING: "ranking",
+  YES_NO: "yesno",
+  PREDICTION: "prediction",
 };
 
-// 기본 폴백 데이터
-const defaultPollData = pollSamples["1"];
+const OPTION_COLORS = ["#3B82F6", "#EC4899", "#10B981", "#F59E0B", "#8B5CF6", "#6B7280"];
 
-interface PollDetailClientProps {
-  pollId: string;
+function mapOptionsToUI(options: PollWithDetails["options"], totalVotes: number): PollOption[] {
+  return options
+    .sort((a, b) => a.order - b.order)
+    .map((opt, i) => ({
+      id: opt.id,
+      label: opt.text,
+      percent: totalVotes > 0 ? Math.round((opt.voteCount / totalVotes) * 1000) / 10 : 0,
+      color: OPTION_COLORS[i % OPTION_COLORS.length],
+    }));
 }
 
-export function PollDetailClient({ pollId }: PollDetailClientProps) {
+function getSelectedValueFromVote(
+  userVote: UserVoteData | null,
+  interactionType: string
+): string | string[] | number | null {
+  if (!userVote) return null;
+  switch (interactionType) {
+    case "SLIDER":
+      return userVote.sliderValue;
+    case "MULTI_SELECT":
+      return userVote.selectedOptionIds;
+    case "RANKING":
+      return userVote.rankingData;
+    default:
+      return userVote.optionId;
+  }
+}
+
+function formatTimeAgo(dateStr: string): string {
+  const date = new Date(dateStr);
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffMin = Math.floor(diffMs / 60000);
+  if (diffMin < 1) return "방금 전";
+  if (diffMin < 60) return `${diffMin}분 전`;
+  const diffHour = Math.floor(diffMin / 60);
+  if (diffHour < 24) return `${diffHour}시간 전`;
+  const diffDay = Math.floor(diffHour / 24);
+  if (diffDay < 30) return `${diffDay}일 전`;
+  return date.toLocaleDateString("ko-KR");
+}
+
+function formatDate(dateStr: string | null): string {
+  if (!dateStr) return "";
+  return new Date(dateStr).toLocaleDateString("ko-KR", {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  });
+}
+
+// ========================================
+// Main component
+// ========================================
+
+interface PollDetailClientProps {
+  poll: PollWithDetails;
+  userVote: UserVoteData | null;
+  isLoggedIn: boolean;
+}
+
+export function PollDetailClient({ poll, userVote, isLoggedIn }: PollDetailClientProps) {
   const router = useRouter();
-  const [hasVoted, setHasVoted] = useState(false);
-  const [selectedValue, setSelectedValue] = useState<string | string[] | number | null>(null);
+  const { openLoginModal } = useLoginModal();
+  const [isPending, startTransition] = useTransition();
+
+  const pollType = INTERACTION_TYPE_TO_POLL_TYPE[poll.interactionType] || "multiple";
+  const uiOptions = mapOptionsToUI(poll.options, poll.totalVotes);
+
+  const [hasVoted, setHasVoted] = useState(!!userVote);
+  const [selectedValue, setSelectedValue] = useState<string | string[] | number | null>(
+    getSelectedValueFromVote(userVote, poll.interactionType)
+  );
   const [showVoteBar, setShowVoteBar] = useState(true);
   const [voteBarExpanded, setVoteBarExpanded] = useState(false);
   const [commentText, setCommentText] = useState("");
 
-  const currentPoll = pollSamples[pollId] || defaultPollData;
+  // 조회수 증가
+  useEffect(() => {
+    incrementViewCount(poll.id);
+  }, [poll.id]);
 
   // 스크롤 시 투표바 표시/숨김
   useEffect(() => {
@@ -413,77 +286,99 @@ export function PollDetailClient({ pollId }: PollDetailClientProps) {
   }, []);
 
   const handleVote = (value: string | string[] | number | Record<string, number>) => {
-    setSelectedValue(value as string | string[] | number);
-    setHasVoted(true);
-    setTimeout(() => {
-      const resultsSection = document.getElementById("results-section");
-      if (resultsSection) {
-        resultsSection.scrollIntoView({ behavior: "smooth", block: "start" });
+    if (!isLoggedIn) {
+      openLoginModal("투표하려면 로그인이 필요합니다");
+      return;
+    }
+
+    const voteValue = value as string | string[] | number;
+
+    startTransition(async () => {
+      const dto: Parameters<typeof castVote>[0] = {
+        pollId: poll.id,
+        interactionType: poll.interactionType,
+      };
+
+      if (poll.interactionType === "SLIDER") {
+        dto.sliderValue = voteValue as number;
+      } else if (poll.interactionType === "MULTI_SELECT") {
+        dto.selectedOptionIds = voteValue as string[];
+      } else if (poll.interactionType === "RANKING") {
+        dto.rankingData = voteValue as string[];
+      } else {
+        dto.optionId = voteValue as string;
       }
-    }, 100);
+
+      const result = await castVote(dto);
+
+      if (result.error) {
+        if (result.status === 401) {
+          openLoginModal("투표하려면 로그인이 필요합니다");
+        } else {
+          toast.error(result.error);
+        }
+        return;
+      }
+
+      setSelectedValue(voteValue);
+      setHasVoted(true);
+      router.refresh();
+
+      setTimeout(() => {
+        const resultsSection = document.getElementById("results-section");
+        if (resultsSection) {
+          resultsSection.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+      }, 100);
+    });
+  };
+
+  const handleComment = () => {
+    if (!isLoggedIn) {
+      openLoginModal("댓글을 작성하려면 로그인이 필요합니다");
+      return;
+    }
+    if (!commentText.trim()) return;
+
+    startTransition(async () => {
+      const result = await createPollComment(poll.id, {
+        content: commentText.trim(),
+        optionId: typeof selectedValue === "string" ? selectedValue : undefined,
+      });
+
+      if (result.error) {
+        if (result.status === 401) {
+          openLoginModal("댓글을 작성하려면 로그인이 필요합니다");
+        } else {
+          toast.error(result.error);
+        }
+        return;
+      }
+
+      setCommentText("");
+      toast.success("댓글이 등록되었습니다");
+      router.refresh();
+    });
   };
 
   const getOptionColor = (optionId: string) => {
-    return currentPoll.options.find((o) => o.id === optionId)?.color || "#888";
+    return uiOptions.find((o) => o.id === optionId)?.color || "#888";
+  };
+
+  const getOptionLabel = (optionId: string) => {
+    return uiOptions.find((o) => o.id === optionId)?.label;
   };
 
   // 투표 결과 UI 렌더링
   const renderResultsUI = () => {
     if (!hasVoted) return null;
 
-    // 척도 타입은 별도 UI
-    if (currentPoll.pollType === "scale") {
-      return (
-        <section id="results-section" className="px-4 mt-6 scroll-mt-16">
-          <h2 className="text-sm font-semibold text-foreground mb-3">투표 결과</h2>
-          <ScalePoll
-            onVote={() => {}}
-            hasVoted={true}
-            selectedValue={selectedValue as number}
-            min={currentPoll.scaleConfig?.min}
-            max={currentPoll.scaleConfig?.max}
-            labels={currentPoll.scaleConfig?.labels}
-            results={currentPoll.scaleConfig?.results}
-          />
-        </section>
-      );
-    }
-
-    // 순위 타입
-    if (currentPoll.pollType === "ranking" && Array.isArray(selectedValue)) {
-      return (
-        <section id="results-section" className="px-4 mt-6 scroll-mt-16">
-          <h2 className="text-sm font-semibold text-foreground mb-3">투표 결과</h2>
-          <div className="bg-card border border-border rounded-xl p-4">
-            <p className="text-xs text-muted-foreground mb-3">내가 선택한 순위</p>
-            <div className="space-y-2">
-              {selectedValue.map((optionId, index) => {
-                const option = currentPoll.options.find((o) => o.id === optionId);
-                return (
-                  <div key={optionId} className="flex items-center gap-3">
-                    <span className="w-6 h-6 rounded-full bg-primary/10 text-primary text-xs font-bold flex items-center justify-center">
-                      {index + 1}
-                    </span>
-                    <span className="text-sm text-foreground">{option?.label}</span>
-                  </div>
-                );
-              })}
-            </div>
-            <p className="text-xs text-muted-foreground mt-4 text-center">
-              총 {currentPoll.totalVotes.toLocaleString()}명 참여
-            </p>
-          </div>
-        </section>
-      );
-    }
-
-    // 기본 결과 UI
     return (
       <section id="results-section" className="px-4 mt-6 scroll-mt-16">
         <h2 className="text-sm font-semibold text-foreground mb-3">투표 결과</h2>
         <div className="bg-card border border-border rounded-xl p-4">
           <div className="space-y-3">
-            {currentPoll.options.map((option) => {
+            {uiOptions.map((option) => {
               const isSelected =
                 selectedValue === option.id ||
                 (Array.isArray(selectedValue) && selectedValue.includes(option.id));
@@ -511,12 +406,82 @@ export function PollDetailClient({ pollId }: PollDetailClientProps) {
             })}
           </div>
           <p className="text-xs text-muted-foreground mt-3 text-center">
-            총 {currentPoll.totalVotes.toLocaleString()}명 참여
+            총 {poll.totalVotes.toLocaleString()}명 참여
           </p>
         </div>
       </section>
     );
   };
+
+  // 댓글 렌더링
+  const renderComment = (comment: PollCommentData, isReply = false) => {
+    const avatarSize = isReply ? "w-6 h-6 text-[9px]" : "w-7 h-7 text-[10px]";
+    const nameSize = isReply ? "text-[13px]" : "text-sm";
+    const contentSize = isReply ? "text-[13px]" : "text-sm";
+    const badgeSize = isReply ? "text-[9px] px-1 py-0.5" : "text-[10px] px-1.5 py-0.5";
+    const iconSize = isReply ? "w-2.5 h-2.5" : "w-3 h-3";
+    const metaSize = isReply ? "text-[10px]" : "text-[11px]";
+    const actionSize = isReply ? "text-[11px]" : "text-xs";
+
+    const optId = comment.optionId;
+    const color = optId ? getOptionColor(optId) : "#888";
+    const label = optId ? getOptionLabel(optId) : undefined;
+    const userName = comment.user?.name || "익명";
+
+    return (
+      <div key={comment.id} className={`flex gap-2${isReply ? "" : ".5"}`}>
+        <div
+          className={`${avatarSize} rounded-full flex items-center justify-center font-bold text-white flex-shrink-0`}
+          style={{ backgroundColor: color }}
+        >
+          {userName[0]}
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2">
+            <span className={`${nameSize} font-medium text-foreground`}>{userName}</span>
+            {label && (
+              <span
+                className={`${badgeSize} rounded`}
+                style={{
+                  backgroundColor: `${color}20`,
+                  color: color,
+                }}
+              >
+                {label}
+              </span>
+            )}
+            <span className={`${metaSize} text-muted-foreground`}>
+              {formatTimeAgo(comment.createdAt)}
+            </span>
+          </div>
+          <p className={`${contentSize} text-foreground/90 mt-1 leading-relaxed`}>
+            {comment.content}
+          </p>
+          <div className={`flex items-center gap-4 mt-1.5 ${actionSize} text-muted-foreground`}>
+            <button
+              type="button"
+              className="flex items-center gap-1 hover:text-primary transition-colors"
+            >
+              <ThumbsUp className={iconSize} />
+              <span>{comment.likes}</span>
+            </button>
+            <button type="button" className="hover:text-primary transition-colors">
+              답글
+            </button>
+          </div>
+
+          {/* 대댓글 */}
+          {!isReply && comment.replies && comment.replies.length > 0 && (
+            <div className="mt-3 space-y-3">
+              {comment.replies.map((reply) => renderComment(reply, true))}
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  };
+
+  const topLevelComments = poll.comments.filter((c) => !c.parentId);
 
   return (
     <div className="min-h-screen bg-background pb-24">
@@ -541,38 +506,42 @@ export function PollDetailClient({ pollId }: PollDetailClientProps) {
       <section className="relative">
         <div className="relative h-48 w-full">
           <Image
-            src={currentPoll.image || "/placeholder.svg"}
-            alt={currentPoll.title}
+            src={poll.imageUrl || "/placeholder.svg"}
+            alt={poll.title}
             fill
             className="object-cover"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-background via-background/50 to-transparent" />
         </div>
         <div className="px-4 -mt-16 relative z-10">
-          <span className="inline-block text-xs font-medium text-primary bg-primary/10 px-2 py-1 rounded mb-2">
-            {currentPoll.category}
-          </span>
+          {poll.category && (
+            <span className="inline-block text-xs font-medium text-primary bg-primary/10 px-2 py-1 rounded mb-2">
+              {poll.category}
+            </span>
+          )}
           <h1 className="text-xl font-bold text-foreground leading-tight text-balance">
-            {currentPoll.title}
+            {poll.title}
           </h1>
-          <p className="text-sm text-muted-foreground mt-2 leading-relaxed">
-            {currentPoll.description}
-          </p>
+          {poll.description && (
+            <p className="text-sm text-muted-foreground mt-2 leading-relaxed">{poll.description}</p>
+          )}
           <div className="flex items-center gap-4 mt-3 text-xs text-muted-foreground">
             <div className="flex items-center gap-1">
               <Users className="w-3.5 h-3.5" />
-              <span>{currentPoll.totalVotes.toLocaleString()}명 참여</span>
+              <span>{poll.totalVotes.toLocaleString()}명 참여</span>
             </div>
-            <div className="flex items-center gap-1">
-              <Clock className="w-3.5 h-3.5" />
-              <span>{currentPoll.endDate} 마감</span>
-            </div>
+            {poll.endsAt && (
+              <div className="flex items-center gap-1">
+                <Clock className="w-3.5 h-3.5" />
+                <span>{formatDate(poll.endsAt)} 마감</span>
+              </div>
+            )}
           </div>
         </div>
       </section>
 
       {/* AI Article Section */}
-      {currentPoll.aiArticle && (
+      {poll.aiContent && (
         <section className="px-4 mt-6">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
@@ -583,13 +552,27 @@ export function PollDetailClient({ pollId }: PollDetailClientProps) {
                 <h2 className="text-sm font-semibold text-foreground">
                   투표 전 알아두면 좋은 팩트
                 </h2>
-                <p className="text-[10px] text-muted-foreground">
-                  {currentPoll.aiArticle.lastUpdated} 업데이트
-                </p>
+                {poll.aiUpdatedAt && (
+                  <p className="text-[10px] text-muted-foreground">
+                    {formatTimeAgo(poll.aiUpdatedAt)} 업데이트
+                  </p>
+                )}
               </div>
             </div>
           </div>
-          <MarkdownRenderer content={currentPoll.aiArticle.content} />
+          <MarkdownRenderer content={poll.aiContent} />
+        </section>
+      )}
+
+      {/* Sources */}
+      {poll.sources && poll.sources.length > 0 && (
+        <section className="px-4 mt-4">
+          <h3 className="text-xs font-semibold text-muted-foreground mb-2">출처</h3>
+          <div className="flex flex-wrap gap-1.5">
+            {poll.sources.map((source) => (
+              <InlineSource key={source.id} name={source.title} url={source.url} />
+            ))}
+          </div>
         </section>
       )}
 
@@ -597,107 +580,17 @@ export function PollDetailClient({ pollId }: PollDetailClientProps) {
       {renderResultsUI()}
 
       {/* Comments Section */}
-      {hasVoted && currentPoll.comments && currentPoll.comments.length > 0 && (
+      {hasVoted && topLevelComments.length > 0 && (
         <section className="px-4 mt-6">
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-sm font-semibold text-foreground">
-              댓글 {currentPoll.comments.length}개
+              댓글 {topLevelComments.length}개
             </h2>
           </div>
           <div className="divide-y divide-border">
-            {currentPoll.comments.map((comment) => (
+            {topLevelComments.map((comment) => (
               <div key={comment.id} className="py-3 first:pt-0">
-                <div className="flex gap-2.5">
-                  <div
-                    className="w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold text-white flex-shrink-0"
-                    style={{ backgroundColor: getOptionColor(comment.vote) }}
-                  >
-                    {comment.author[0]}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm font-medium text-foreground">{comment.author}</span>
-                      <span
-                        className="text-[10px] px-1.5 py-0.5 rounded"
-                        style={{
-                          backgroundColor: `${getOptionColor(comment.vote)}20`,
-                          color: getOptionColor(comment.vote),
-                        }}
-                      >
-                        {currentPoll.options.find((o) => o.id === comment.vote)?.label}
-                      </span>
-                      <span className="text-[11px] text-muted-foreground">{comment.createdAt}</span>
-                    </div>
-                    <p className="text-sm text-foreground/90 mt-1 leading-relaxed">
-                      {comment.content}
-                    </p>
-                    <div className="flex items-center gap-4 mt-1.5 text-xs text-muted-foreground">
-                      <button
-                        type="button"
-                        className="flex items-center gap-1 hover:text-primary transition-colors"
-                      >
-                        <ThumbsUp className="w-3 h-3" />
-                        <span>{comment.likes}</span>
-                      </button>
-                      <button type="button" className="hover:text-primary transition-colors">
-                        답글
-                      </button>
-                    </div>
-
-                    {/* 대댓글 */}
-                    {comment.replies && comment.replies.length > 0 && (
-                      <div className="mt-3 space-y-3">
-                        {comment.replies.map((reply) => (
-                          <div key={reply.id} className="flex gap-2">
-                            <div
-                              className="w-6 h-6 rounded-full flex items-center justify-center text-[9px] font-bold text-white flex-shrink-0"
-                              style={{ backgroundColor: getOptionColor(reply.vote) }}
-                            >
-                              {reply.author[0]}
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-2">
-                                <span className="text-[13px] font-medium text-foreground">
-                                  {reply.author}
-                                </span>
-                                <span
-                                  className="text-[9px] px-1 py-0.5 rounded"
-                                  style={{
-                                    backgroundColor: `${getOptionColor(reply.vote)}20`,
-                                    color: getOptionColor(reply.vote),
-                                  }}
-                                >
-                                  {currentPoll.options.find((o) => o.id === reply.vote)?.label}
-                                </span>
-                                <span className="text-[10px] text-muted-foreground">
-                                  {reply.createdAt}
-                                </span>
-                              </div>
-                              <p className="text-[13px] text-foreground/90 mt-0.5 leading-relaxed">
-                                {reply.content}
-                              </p>
-                              <div className="flex items-center gap-4 mt-1 text-[11px] text-muted-foreground">
-                                <button
-                                  type="button"
-                                  className="flex items-center gap-1 hover:text-primary transition-colors"
-                                >
-                                  <ThumbsUp className="w-2.5 h-2.5" />
-                                  <span>{reply.likes}</span>
-                                </button>
-                                <button
-                                  type="button"
-                                  className="hover:text-primary transition-colors"
-                                >
-                                  답글
-                                </button>
-                              </div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                </div>
+                {renderComment(comment)}
               </div>
             ))}
           </div>
@@ -712,10 +605,14 @@ export function PollDetailClient({ pollId }: PollDetailClientProps) {
       >
         {!hasVoted ? (
           <FloatingVoteBar
-            pollType={currentPoll.pollType}
-            options={currentPoll.options}
+            pollType={pollType}
+            options={uiOptions}
             onVote={handleVote}
-            scaleConfig={currentPoll.scaleConfig}
+            scaleConfig={
+              pollType === "scale"
+                ? { min: 1, max: 10, labels: { min: "매우 불만족", max: "매우 만족" } }
+                : undefined
+            }
           />
         ) : (
           <div className="px-4 py-2.5">
@@ -732,13 +629,17 @@ export function PollDetailClient({ pollId }: PollDetailClientProps) {
                   </button>
                 </div>
                 <FloatingVoteBar
-                  pollType={currentPoll.pollType}
-                  options={currentPoll.options}
+                  pollType={pollType}
+                  options={uiOptions}
                   onVote={(value) => {
-                    setSelectedValue(value as string | string[] | number);
+                    handleVote(value);
                     setVoteBarExpanded(false);
                   }}
-                  scaleConfig={currentPoll.scaleConfig}
+                  scaleConfig={
+                    pollType === "scale"
+                      ? { min: 1, max: 10, labels: { min: "매우 불만족", max: "매우 만족" } }
+                      : undefined
+                  }
                 />
               </div>
             ) : (
@@ -751,19 +652,18 @@ export function PollDetailClient({ pollId }: PollDetailClientProps) {
                     />
                   )}
                   <span className="text-xs text-muted-foreground">
-                    {typeof selectedValue === "string" &&
-                      currentPoll.options.find((o) => o.id === selectedValue) && (
-                        <>
-                          <span className="font-medium text-foreground">
-                            {currentPoll.options.find((o) => o.id === selectedValue)?.label}
-                          </span>
-                          에 투표함
-                        </>
-                      )}
+                    {typeof selectedValue === "string" && getOptionLabel(selectedValue) && (
+                      <>
+                        <span className="font-medium text-foreground">
+                          {getOptionLabel(selectedValue)}
+                        </span>
+                        에 투표함
+                      </>
+                    )}
                     {typeof selectedValue === "number" && (
                       <>
-                        <span className="font-medium text-foreground">{selectedValue}점</span>으로
-                        투표함
+                        <span className="font-medium text-foreground">{selectedValue}점</span>
+                        으로 투표함
                       </>
                     )}
                     {Array.isArray(selectedValue) && (
@@ -790,15 +690,18 @@ export function PollDetailClient({ pollId }: PollDetailClientProps) {
                     type="text"
                     value={commentText}
                     onChange={(e) => setCommentText(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && !e.nativeEvent.isComposing && commentText.trim()) {
+                        handleComment();
+                      }
+                    }}
                     placeholder="의견을 남겨보세요..."
                     className="flex-1 px-3 py-2 text-sm bg-muted/50 border border-border rounded-lg focus:outline-none focus:ring-1 focus:ring-primary"
                   />
                   <Button
                     size="sm"
-                    disabled={!commentText.trim()}
-                    onClick={() => {
-                      setCommentText("");
-                    }}
+                    disabled={!commentText.trim() || isPending}
+                    onClick={handleComment}
                     className="px-4"
                   >
                     등록
