@@ -7,13 +7,6 @@ import {
   getPollById as apiGetPollById,
   getUserVote as apiGetUserVote,
 } from "@/lib/api";
-import {
-  getHotDebate as mockGetHotDebate,
-  getPollFeed as mockGetPollFeed,
-  getSuggestedPolls as mockGetSuggestedPolls,
-  getPollById as mockGetPollById,
-  getUserVote as mockGetUserVote,
-} from "@/lib/mock/polls";
 
 // ========================================
 // Types (프론트엔드 컴포넌트에서 사용하는 타입)
@@ -108,7 +101,7 @@ export type UserVoteData = {
 };
 
 // ========================================
-// Queries (API 호출 + mock fallback)
+// Queries (API 호출)
 // ========================================
 
 /**
@@ -122,12 +115,10 @@ export async function getPollFeed(
 ): Promise<PollCardData[]> {
   try {
     const { data, error } = await apiGetPollFeed(sort, search, limit, offset);
-    if (error || !data) {
-      return mockGetPollFeed(sort, search, limit, offset);
-    }
+    if (error || !data) return [];
     return (data as { items: PollCardData[] }).items ?? (data as PollCardData[]);
   } catch {
-    return mockGetPollFeed(sort, search, limit, offset);
+    return [];
   }
 }
 
@@ -137,12 +128,10 @@ export async function getPollFeed(
 export async function getHotDebate(): Promise<HotDebateData | null> {
   try {
     const { data, error } = await apiGetHotDebate();
-    if (error || !data) {
-      return mockGetHotDebate();
-    }
+    if (error || !data) return null;
     return data as HotDebateData;
   } catch {
-    return mockGetHotDebate();
+    return null;
   }
 }
 
@@ -152,12 +141,10 @@ export async function getHotDebate(): Promise<HotDebateData | null> {
 export async function getSuggestedPolls(limit = 10): Promise<PollCardData[]> {
   try {
     const { data, error } = await apiGetSuggestedPolls(limit);
-    if (error || !data) {
-      return mockGetSuggestedPolls(limit);
-    }
+    if (error || !data) return [];
     return data as PollCardData[];
   } catch {
-    return mockGetSuggestedPolls(limit);
+    return [];
   }
 }
 
@@ -167,12 +154,10 @@ export async function getSuggestedPolls(limit = 10): Promise<PollCardData[]> {
 export async function getPollById(id: string): Promise<PollWithDetails | null> {
   try {
     const { data, error } = await apiGetPollById(id);
-    if (error || !data) {
-      return mockGetPollById(id);
-    }
+    if (error || !data) return null;
     return data as PollWithDetails;
   } catch {
-    return mockGetPollById(id);
+    return null;
   }
 }
 
@@ -182,11 +167,9 @@ export async function getPollById(id: string): Promise<PollWithDetails | null> {
 export async function getUserVote(pollId: string): Promise<UserVoteData | null> {
   try {
     const { data, error } = await apiGetUserVote(pollId);
-    if (error || !data) {
-      return mockGetUserVote(pollId);
-    }
+    if (error || !data) return null;
     return data as UserVoteData;
   } catch {
-    return mockGetUserVote(pollId);
+    return null;
   }
 }
