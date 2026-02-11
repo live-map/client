@@ -83,6 +83,7 @@ export type PollWithDetails = {
   viewCount: number;
   createdAt: string;
   endsAt: string | null;
+  userId: string;
   aiContent: string | null;
   aiUpdatedAt: string | null;
   options: { id: string; text: string; order: number; voteCount: number }[];

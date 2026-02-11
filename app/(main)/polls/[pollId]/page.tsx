@@ -16,5 +16,12 @@ export default async function PollDetailPage({ params }: PollDetailPageProps) {
 
   const userVote = session?.user?.id ? await getUserVote(pollId) : null;
 
-  return <PollDetailClient poll={poll} userVote={userVote} isLoggedIn={!!session?.user} />;
+  return (
+    <PollDetailClient
+      poll={poll}
+      userVote={userVote}
+      isLoggedIn={!!session?.user}
+      currentUserId={session?.user?.id ?? null}
+    />
+  );
 }

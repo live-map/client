@@ -4,13 +4,26 @@ import React from "react";
 import { useState, useEffect, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { ArrowLeft, Users, Clock, ExternalLink, ThumbsUp, Share2 } from "lucide-react";
+import {
+  ArrowLeft,
+  Users,
+  Clock,
+  ExternalLink,
+  ThumbsUp,
+  Share2,
+  MoreVertical,
+  Pencil,
+  Trash2,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import type { PollWithDetails, UserVoteData, PollCommentData } from "@/app/actions/polls/queries";
-import { castVote } from "@/app/actions/polls/mutations";
-import { createPollComment } from "@/app/actions/polls/mutations";
-import { incrementViewCount } from "@/app/actions/polls/mutations";
+import {
+  castVote,
+  createPollComment,
+  incrementViewCount,
+  deletePoll,
+} from "@/app/actions/polls/mutations";
 import { FloatingVoteBar } from "@/components/polls/types/poll-types";
 import type { PollType, PollOption } from "@/components/polls/types/poll-types";
 import { useLoginModal } from "@/components/auth/login-modal";
@@ -244,12 +257,21 @@ interface PollDetailClientProps {
   poll: PollWithDetails;
   userVote: UserVoteData | null;
   isLoggedIn: boolean;
+  currentUserId: string | null;
 }
 
-export function PollDetailClient({ poll, userVote, isLoggedIn }: PollDetailClientProps) {
+export function PollDetailClient({
+  poll,
+  userVote,
+  isLoggedIn,
+  currentUserId,
+}: PollDetailClientProps) {
   const router = useRouter();
   const { openLoginModal } = useLoginModal();
   const [isPending, startTransition] = useTransition();
+  const [showMenu, setShowMenu] = useState(false);
+
+  const isAuthor = currentUserId != null && currentUserId === poll.userId;
 
   const pollType = INTERACTION_TYPE_TO_POLL_TYPE[poll.interactionType] || "multiple";
   const uiOptions = mapOptionsToUI(poll.options, poll.totalVotes);
@@ -390,6 +412,19 @@ export function PollDetailClient({ poll, userVote, isLoggedIn }: PollDetailClien
       setReplyingTo(null);
       toast.success("답글이 등록되었습니다");
       router.refresh();
+    });
+  };
+
+  const handleDelete = () => {
+    if (!confirm("정말 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.")) return;
+    startTransition(async () => {
+      const result = await deletePoll(poll.id);
+      if (result.error) {
+        toast.error(result.error);
+        return;
+      }
+      toast.success("여론조사가 삭제되었습니다");
+      router.push("/polls");
     });
   };
 
@@ -562,9 +597,48 @@ export function PollDetailClient({ poll, userVote, isLoggedIn }: PollDetailClien
             <ArrowLeft className="w-5 h-5" />
             <span className="text-sm">뒤로</span>
           </button>
-          <button type="button" className="p-2 hover:bg-muted rounded-full transition-colors">
-            <Share2 className="w-5 h-5 text-muted-foreground" />
-          </button>
+          <div className="flex items-center gap-1">
+            <button type="button" className="p-2 hover:bg-muted rounded-full transition-colors">
+              <Share2 className="w-5 h-5 text-muted-foreground" />
+            </button>
+            {isAuthor && (
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setShowMenu(!showMenu)}
+                  className="p-2 hover:bg-muted rounded-full transition-colors"
+                >
+                  <MoreVertical className="w-5 h-5 text-muted-foreground" />
+                </button>
+                {showMenu && (
+                  <div className="absolute right-0 top-full mt-1 w-36 bg-card border border-border rounded-lg shadow-lg py-1 z-50">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowMenu(false);
+                        router.push(`/polls/${poll.id}/edit`);
+                      }}
+                      className="w-full flex items-center gap-2 px-3 py-2 text-sm text-foreground hover:bg-muted transition-colors"
+                    >
+                      <Pencil className="w-4 h-4" />
+                      수정
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowMenu(false);
+                        handleDelete();
+                      }}
+                      className="w-full flex items-center gap-2 px-3 py-2 text-sm text-destructive hover:bg-destructive/10 transition-colors"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                      삭제
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
         </div>
       </header>
 
