@@ -489,38 +489,64 @@ export function PollDetailClient({
   const renderResultsUI = () => {
     if (!hasVoted) return null;
 
+    const isSlider = poll.interactionType === "SLIDER";
+    const sliderAvg = poll.averageSliderValue;
+
     return (
       <section id="results-section" className="px-4 mt-6 scroll-mt-16">
         <h2 className="text-sm font-semibold text-foreground mb-3">투표 결과</h2>
         <div className="bg-card border border-border rounded-xl p-4">
-          <div className="space-y-3">
-            {uiOptions.map((option) => {
-              const isSelected =
-                selectedValue === option.id ||
-                (Array.isArray(selectedValue) && selectedValue.includes(option.id));
-              return (
-                <div key={option.id}>
-                  <div className="flex items-center justify-between mb-1">
-                    <span
-                      className={`text-sm font-medium ${isSelected ? "text-foreground" : "text-muted-foreground"}`}
-                    >
-                      {option.label}
-                      {isSelected && <span className="ml-2 text-xs text-primary">내 선택</span>}
-                    </span>
-                    <span className="text-sm font-bold" style={{ color: option.color }}>
-                      {option.percent}%
-                    </span>
+          {isSlider ? (
+            <div className="text-center">
+              <p className="text-xs text-muted-foreground mb-2">평균 점수</p>
+              <p className="text-3xl font-bold text-primary">
+                {sliderAvg != null
+                  ? sliderAvg.toFixed(1)
+                  : ((selectedValue as number)?.toFixed(1) ?? "-")}
+              </p>
+              <div className="mt-3 h-3 bg-muted rounded-full overflow-hidden">
+                <div
+                  className="h-full rounded-full bg-gradient-to-r from-amber-400 to-amber-500 transition-all duration-500"
+                  style={{
+                    width: `${((sliderAvg ?? (selectedValue as number) ?? 5) / 10) * 100}%`,
+                  }}
+                />
+              </div>
+              <div className="flex justify-between mt-1 text-[10px] text-muted-foreground">
+                <span>1</span>
+                <span>10</span>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {uiOptions.map((option) => {
+                const isSelected =
+                  selectedValue === option.id ||
+                  (Array.isArray(selectedValue) && selectedValue.includes(option.id));
+                return (
+                  <div key={option.id}>
+                    <div className="flex items-center justify-between mb-1">
+                      <span
+                        className={`text-sm font-medium ${isSelected ? "text-foreground" : "text-muted-foreground"}`}
+                      >
+                        {option.label}
+                        {isSelected && <span className="ml-2 text-xs text-primary">내 선택</span>}
+                      </span>
+                      <span className="text-sm font-bold" style={{ color: option.color }}>
+                        {option.percent}%
+                      </span>
+                    </div>
+                    <div className="h-2 bg-muted rounded-full overflow-hidden">
+                      <div
+                        className="h-full rounded-full transition-all duration-500"
+                        style={{ width: `${option.percent}%`, backgroundColor: option.color }}
+                      />
+                    </div>
                   </div>
-                  <div className="h-2 bg-muted rounded-full overflow-hidden">
-                    <div
-                      className="h-full rounded-full transition-all duration-500"
-                      style={{ width: `${option.percent}%`, backgroundColor: option.color }}
-                    />
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+                );
+              })}
+            </div>
+          )}
           <p className="text-xs text-muted-foreground mt-3 text-center">
             총 {poll.totalVotes.toLocaleString()}명 참여
           </p>
