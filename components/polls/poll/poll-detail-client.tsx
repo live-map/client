@@ -261,6 +261,8 @@ export function PollDetailClient({ poll, userVote, isLoggedIn }: PollDetailClien
   const [showVoteBar, setShowVoteBar] = useState(true);
   const [voteBarExpanded, setVoteBarExpanded] = useState(false);
   const [commentText, setCommentText] = useState("");
+  const [replyingTo, setReplyingTo] = useState<string | null>(null);
+  const [replyText, setReplyText] = useState("");
 
   // 조회수 증가
   useEffect(() => {
@@ -357,6 +359,36 @@ export function PollDetailClient({ poll, userVote, isLoggedIn }: PollDetailClien
 
       setCommentText("");
       toast.success("댓글이 등록되었습니다");
+      router.refresh();
+    });
+  };
+
+  const handleReply = (parentId: string) => {
+    if (!isLoggedIn) {
+      openLoginModal("답글을 작성하려면 로그인이 필요합니다");
+      return;
+    }
+    if (!replyText.trim()) return;
+
+    startTransition(async () => {
+      const result = await createPollComment(poll.id, {
+        content: replyText.trim(),
+        parentId,
+        optionId: typeof selectedValue === "string" ? selectedValue : undefined,
+      });
+
+      if (result.error) {
+        if (result.status === 401) {
+          openLoginModal("답글을 작성하려면 로그인이 필요합니다");
+        } else {
+          toast.error(result.error);
+        }
+        return;
+      }
+
+      setReplyText("");
+      setReplyingTo(null);
+      toast.success("답글이 등록되었습니다");
       router.refresh();
     });
   };
@@ -465,13 +497,47 @@ export function PollDetailClient({ poll, userVote, isLoggedIn }: PollDetailClien
               <ThumbsUp className={iconSize} />
               <span>{comment.likes}</span>
             </button>
-            <button type="button" className="hover:text-primary transition-colors">
+            <button
+              type="button"
+              className="hover:text-primary transition-colors"
+              onClick={() => {
+                setReplyingTo(replyingTo === comment.id ? null : comment.id);
+                setReplyText("");
+              }}
+            >
               답글
             </button>
           </div>
 
+          {/* 답글 입력 */}
+          {replyingTo === comment.id && (
+            <div className="mt-2 flex gap-2">
+              <input
+                type="text"
+                value={replyText}
+                onChange={(e) => setReplyText(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !e.nativeEvent.isComposing && replyText.trim()) {
+                    handleReply(comment.id);
+                  }
+                }}
+                placeholder="답글을 입력하세요..."
+                className="flex-1 px-2.5 py-1.5 text-xs bg-muted/50 border border-border rounded-lg focus:outline-none focus:ring-1 focus:ring-primary"
+                autoFocus
+              />
+              <Button
+                size="sm"
+                disabled={!replyText.trim() || isPending}
+                onClick={() => handleReply(comment.id)}
+                className="px-3 h-7 text-xs"
+              >
+                등록
+              </Button>
+            </div>
+          )}
+
           {/* 대댓글 */}
-          {!isReply && comment.replies && comment.replies.length > 0 && (
+          {comment.replies && comment.replies.length > 0 && (
             <div className="mt-3 space-y-3">
               {comment.replies.map((reply) => renderComment(reply, true))}
             </div>
