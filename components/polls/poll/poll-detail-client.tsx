@@ -192,6 +192,7 @@ const INTERACTION_TYPE_TO_POLL_TYPE: Record<string, PollType> = {
   MULTIPLE_CHOICE: "checkbox",
   SLIDER: "scale",
   RANKING: "ranking",
+  EMOJI_REACTION: "multiple",
   YES_NO: "yesno",
   PREDICTION: "prediction",
 };
