@@ -1,6 +1,6 @@
 "use client";
 
-import type { PollOption } from "@/lib/generated/prisma/client";
+import type { PollOption } from "@/lib/types/poll";
 import { CANDIDATE_MAP } from "@/lib/constants/candidates";
 
 const OPTION_COLORS = [

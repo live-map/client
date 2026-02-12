@@ -116,14 +116,23 @@ export const getPollById = async (pollId: string) => {
   return apiFetch(`/api/v1/polls/${pollId}`);
 };
 
-export const createPoll = async (body: Record<string, unknown>) => {
+export const createPoll = async (body: {
+  title: string;
+  description?: string;
+  interactionType?: string;
+  options: { text: string; order?: number }[];
+  sources?: { title: string; url: string; sourceType?: string; description?: string }[];
+}) => {
   return apiFetch("/api/v1/polls", {
     method: "POST",
     body: JSON.stringify(body),
   });
 };
 
-export const updatePoll = async (pollId: string, body: Record<string, unknown>) => {
+export const updatePoll = async (
+  pollId: string,
+  body: { title?: string; description?: string; status?: string }
+) => {
   return apiFetch(`/api/v1/polls/${pollId}`, {
     method: "PATCH",
     body: JSON.stringify(body),
@@ -134,7 +143,16 @@ export const deletePoll = async (pollId: string) => {
   return apiFetch(`/api/v1/polls/${pollId}`, { method: "DELETE" });
 };
 
-export const castVote = async (pollId: string, body: Record<string, unknown>) => {
+export const castVote = async (
+  pollId: string,
+  body: {
+    interactionType: string;
+    optionId?: string;
+    sliderValue?: number;
+    selectedOptionIds?: string[];
+    rankingData?: string[];
+  }
+) => {
   return apiFetch(`/api/v1/polls/${pollId}/vote`, {
     method: "POST",
     body: JSON.stringify(body),
@@ -145,7 +163,10 @@ export const getUserVote = async (pollId: string) => {
   return apiFetch(`/api/v1/polls/${pollId}/vote`);
 };
 
-export const createPollComment = async (pollId: string, body: Record<string, unknown>) => {
+export const createPollComment = async (
+  pollId: string,
+  body: { content: string; parentId?: string; optionId?: string }
+) => {
   return apiFetch(`/api/v1/polls/${pollId}/comments`, {
     method: "POST",
     body: JSON.stringify(body),

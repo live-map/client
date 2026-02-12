@@ -180,11 +180,20 @@ function MarkdownRenderer({ content }: { content: string }) {
     return elements;
   };
 
+  const escapeHtml = (str: string) =>
+    str
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;");
+
   const parseInline = (text: string) => {
-    return text
+    const escaped = escapeHtml(text);
+    return escaped
       .replace(/\*\*(.*?)\*\*/g, '<strong class="font-medium text-foreground">$1</strong>')
       .replace(
-        /\[(.*?)\]\((.*?)\)/g,
+        /\[(.*?)\]\((https?:\/\/[^\)]*)\)/g,
         '<a href="$2" target="_blank" rel="noopener noreferrer" class="text-primary hover:underline">$1</a>'
       );
   };
