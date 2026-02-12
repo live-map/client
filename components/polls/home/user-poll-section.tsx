@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Plus, ThumbsUp, MessageSquare, ChevronRight } from "lucide-react";
+import { Plus, ThumbsUp, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 
@@ -13,7 +13,6 @@ interface UserPoll {
   category: string;
   author: string;
   likes: number;
-  comments: number;
   createdAt: string;
 }
 
@@ -117,10 +116,6 @@ export function UserPollSection({ polls, onCreateClick }: UserPollSectionProps) 
                   <div className="flex items-center gap-1">
                     <ThumbsUp className="w-3 h-3" />
                     <span>{poll.likes.toLocaleString()}</span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <MessageSquare className="w-3 h-3" />
-                    <span>{poll.comments}</span>
                   </div>
                 </div>
               </div>

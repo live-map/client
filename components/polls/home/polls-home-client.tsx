@@ -56,8 +56,7 @@ export function PollsHomeClient({ polls, hotDebate, suggested }: PollsHomeClient
     title: p.title,
     category: p.category ?? "기타",
     author: p.user?.name ?? "익명",
-    likes: p.viewCount,
-    comments: 0,
+    likes: p.totalVotes,
     createdAt: formatRelativeTime(p.createdAt),
   }));
 
