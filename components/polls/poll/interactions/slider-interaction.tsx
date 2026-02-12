@@ -1,7 +1,7 @@
 "use client";
 
 import * as SliderPrimitive from "@radix-ui/react-slider";
-import type { PollOption } from "@/lib/generated/prisma/client";
+import type { PollOption } from "@/lib/types/poll";
 
 interface SliderInteractionProps {
   options: Pick<PollOption, "id" | "text" | "voteCount">[];

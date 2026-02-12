@@ -110,16 +110,10 @@ export function HotDebate({ debate, onClick }: HotDebateProps) {
     return () => clearInterval(interval);
   }, [debate.comments.length]);
 
-  // Simulate live vote count
+  // liveCount는 실제 totalVotes를 반영
   useEffect(() => {
-    const interval = setInterval(() => {
-      if (Math.random() > 0.6) {
-        setLiveCount((prev) => prev + Math.floor(Math.random() * 3) + 1);
-      }
-    }, 2000);
-
-    return () => clearInterval(interval);
-  }, []);
+    setLiveCount(debate.totalVotes);
+  }, [debate.totalVotes]);
 
   const currentComment = debate.comments[currentCommentIndex];
 

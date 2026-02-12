@@ -1,7 +1,7 @@
 "use client";
 
 import { Check } from "lucide-react";
-import type { PollOption } from "@/lib/generated/prisma/client";
+import type { PollOption } from "@/lib/types/poll";
 
 const OPTION_COLORS = [
   "#3B82F6",

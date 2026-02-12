@@ -1,6 +1,6 @@
 "use client";
 
-import type { PollOption } from "@/lib/generated/prisma/client";
+import type { PollOption } from "@/lib/types/poll";
 
 interface EmojiInteractionProps {
   options: Pick<PollOption, "id" | "text" | "voteCount">[];

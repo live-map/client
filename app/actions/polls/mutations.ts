@@ -7,6 +7,8 @@ import {
   deletePoll as apiDeletePoll,
   incrementPollViewCount as apiIncrementViewCount,
   createPollComment as apiCreatePollComment,
+  likePollComment as apiLikePollComment,
+  deletePollComment as apiDeletePollComment,
 } from "@/lib/api";
 
 // ========================================
@@ -61,9 +63,9 @@ export async function castVote(dto: {
   sliderValue?: number;
   selectedOptionIds?: string[];
   rankingData?: string[];
-}): Promise<ActionResult<Record<string, unknown>>> {
+}): Promise<ActionResult> {
   try {
-    const { data, error, status } = await apiCastVote(dto.pollId, {
+    const { error, status } = await apiCastVote(dto.pollId, {
       interactionType: dto.interactionType,
       optionId: dto.optionId,
       sliderValue: dto.sliderValue,
@@ -75,7 +77,7 @@ export async function castVote(dto: {
       return { error: getVoteErrorMessage(status, error), status };
     }
 
-    return { data: data as Record<string, unknown> };
+    return {};
   } catch {
     return { error: "서버 연결에 실패했습니다" };
   }
@@ -87,15 +89,15 @@ export async function castVote(dto: {
 export async function createPollComment(
   pollId: string,
   dto: { content: string; parentId?: string; optionId?: string }
-): Promise<ActionResult<Record<string, unknown>>> {
+): Promise<ActionResult> {
   try {
-    const { data, error, status } = await apiCreatePollComment(pollId, dto);
+    const { error, status } = await apiCreatePollComment(pollId, dto);
 
     if (error) {
       return { error: getCommentErrorMessage(status, error), status };
     }
 
-    return { data: data as Record<string, unknown> };
+    return {};
   } catch {
     return { error: "서버 연결에 실패했습니다" };
   }
@@ -110,9 +112,9 @@ export async function createPoll(dto: {
   interactionType?: string;
   options: { text: string; order?: number }[];
   sources?: { title: string; url: string; sourceType?: string; description?: string }[];
-}): Promise<ActionResult<Record<string, unknown>>> {
+}): Promise<ActionResult> {
   try {
-    const { data, error } = await apiCreatePoll({
+    const { error } = await apiCreatePoll({
       title: dto.title,
       description: dto.description,
       interactionType: dto.interactionType || "SINGLE_CHOICE",
@@ -124,7 +126,7 @@ export async function createPoll(dto: {
       return { error };
     }
 
-    return { data: data as Record<string, unknown> };
+    return {};
   } catch {
     return { error: "여론조사 생성 중 오류가 발생했습니다." };
   }
@@ -136,15 +138,15 @@ export async function createPoll(dto: {
 export async function updatePoll(
   id: string,
   dto: { title?: string; description?: string; status?: string }
-): Promise<ActionResult<Record<string, unknown>>> {
+): Promise<ActionResult> {
   try {
-    const { data, error } = await apiUpdatePoll(id, dto);
+    const { error } = await apiUpdatePoll(id, dto);
 
     if (error) {
       return { error };
     }
 
-    return { data: data as Record<string, unknown> };
+    return {};
   } catch {
     return { error: "여론조사 수정 중 오류가 발생했습니다." };
   }
@@ -175,5 +177,38 @@ export async function incrementViewCount(pollId: string): Promise<void> {
     await apiIncrementViewCount(pollId);
   } catch {
     // 조회수 증가 실패는 무시
+  }
+}
+
+/**
+ * 댓글 좋아요
+ */
+export async function likePollComment(
+  pollId: string,
+  commentId: string
+): Promise<ActionResult<{ likes: number }>> {
+  try {
+    const { data, error, status } = await apiLikePollComment(pollId, commentId);
+    if (error) {
+      return { error: getCommentErrorMessage(status, error), status };
+    }
+    return { data: data as { likes: number } };
+  } catch {
+    return { error: "서버 연결에 실패했습니다" };
+  }
+}
+
+/**
+ * 댓글 삭제
+ */
+export async function deletePollComment(pollId: string, commentId: string): Promise<ActionResult> {
+  try {
+    const { error, status } = await apiDeletePollComment(pollId, commentId);
+    if (error) {
+      return { error: getCommentErrorMessage(status, error), status };
+    }
+    return { data: null };
+  } catch {
+    return { error: "댓글 삭제 중 오류가 발생했습니다" };
   }
 }

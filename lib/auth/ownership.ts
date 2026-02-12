@@ -6,4 +6,4 @@ export interface OwnershipResult<T> {
   error?: string;
 }
 
-// TODO: Implement verifyItemOwnership when Item model is added to Prisma schema
+// TODO: Implement verifyItemOwnership via backend API

@@ -16,6 +16,14 @@ import {
   Trash2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { toast } from "sonner";
 import type { PollWithDetails, UserVoteData, PollCommentData } from "@/app/actions/polls/queries";
 import {
@@ -23,6 +31,8 @@ import {
   createPollComment,
   incrementViewCount,
   deletePoll,
+  likePollComment,
+  deletePollComment,
 } from "@/app/actions/polls/mutations";
 import { FloatingVoteBar } from "@/components/polls/types/poll-types";
 import type { PollType, PollOption } from "@/components/polls/types/poll-types";
@@ -170,11 +180,20 @@ function MarkdownRenderer({ content }: { content: string }) {
     return elements;
   };
 
+  const escapeHtml = (str: string) =>
+    str
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;");
+
   const parseInline = (text: string) => {
-    return text
+    const escaped = escapeHtml(text);
+    return escaped
       .replace(/\*\*(.*?)\*\*/g, '<strong class="font-medium text-foreground">$1</strong>')
       .replace(
-        /\[(.*?)\]\((.*?)\)/g,
+        /\[(.*?)\]\((https?:\/\/[^\)]*)\)/g,
         '<a href="$2" target="_blank" rel="noopener noreferrer" class="text-primary hover:underline">$1</a>'
       );
   };
@@ -192,6 +211,7 @@ const INTERACTION_TYPE_TO_POLL_TYPE: Record<string, PollType> = {
   MULTIPLE_CHOICE: "checkbox",
   SLIDER: "scale",
   RANKING: "ranking",
+  EMOJI_REACTION: "multiple",
   YES_NO: "yesno",
   PREDICTION: "prediction",
 };
@@ -303,6 +323,11 @@ export function PollDetailClient({
   const [commentText, setCommentText] = useState("");
   const [replyingTo, setReplyingTo] = useState<string | null>(null);
   const [replyText, setReplyText] = useState("");
+  const [confirmDialog, setConfirmDialog] = useState<{
+    title: string;
+    description: string;
+    onConfirm: () => void;
+  } | null>(null);
 
   // 조회수 증가
   useEffect(() => {
@@ -433,16 +458,56 @@ export function PollDetailClient({
     });
   };
 
-  const handleDelete = () => {
-    if (!confirm("정말 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.")) return;
+  const handleLikeComment = (commentId: string) => {
+    if (!isLoggedIn) {
+      openLoginModal("좋아요를 누르려면 로그인이 필요합니다");
+      return;
+    }
     startTransition(async () => {
-      const result = await deletePoll(poll.id);
+      const result = await likePollComment(poll.id, commentId);
       if (result.error) {
         toast.error(result.error);
         return;
       }
-      toast.success("여론조사가 삭제되었습니다");
-      router.push("/polls");
+      router.refresh();
+    });
+  };
+
+  const handleDeleteComment = (commentId: string) => {
+    setConfirmDialog({
+      title: "댓글 삭제",
+      description: "댓글을 삭제하시겠습니까?",
+      onConfirm: () => {
+        setConfirmDialog(null);
+        startTransition(async () => {
+          const result = await deletePollComment(poll.id, commentId);
+          if (result.error) {
+            toast.error(result.error);
+            return;
+          }
+          toast.success("댓글이 삭제되었습니다");
+          router.refresh();
+        });
+      },
+    });
+  };
+
+  const handleDelete = () => {
+    setConfirmDialog({
+      title: "여론조사 삭제",
+      description: "정말 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.",
+      onConfirm: () => {
+        setConfirmDialog(null);
+        startTransition(async () => {
+          const result = await deletePoll(poll.id);
+          if (result.error) {
+            toast.error(result.error);
+            return;
+          }
+          toast.success("여론조사가 삭제되었습니다");
+          router.push("/polls");
+        });
+      },
     });
   };
 
@@ -458,38 +523,64 @@ export function PollDetailClient({
   const renderResultsUI = () => {
     if (!hasVoted) return null;
 
+    const isSlider = poll.interactionType === "SLIDER";
+    const sliderAvg = poll.averageSliderValue;
+
     return (
       <section id="results-section" className="px-4 mt-6 scroll-mt-16">
         <h2 className="text-sm font-semibold text-foreground mb-3">투표 결과</h2>
         <div className="bg-card border border-border rounded-xl p-4">
-          <div className="space-y-3">
-            {uiOptions.map((option) => {
-              const isSelected =
-                selectedValue === option.id ||
-                (Array.isArray(selectedValue) && selectedValue.includes(option.id));
-              return (
-                <div key={option.id}>
-                  <div className="flex items-center justify-between mb-1">
-                    <span
-                      className={`text-sm font-medium ${isSelected ? "text-foreground" : "text-muted-foreground"}`}
-                    >
-                      {option.label}
-                      {isSelected && <span className="ml-2 text-xs text-primary">내 선택</span>}
-                    </span>
-                    <span className="text-sm font-bold" style={{ color: option.color }}>
-                      {option.percent}%
-                    </span>
+          {isSlider ? (
+            <div className="text-center">
+              <p className="text-xs text-muted-foreground mb-2">평균 점수</p>
+              <p className="text-3xl font-bold text-primary">
+                {sliderAvg != null
+                  ? sliderAvg.toFixed(1)
+                  : ((selectedValue as number)?.toFixed(1) ?? "-")}
+              </p>
+              <div className="mt-3 h-3 bg-muted rounded-full overflow-hidden">
+                <div
+                  className="h-full rounded-full bg-gradient-to-r from-amber-400 to-amber-500 transition-all duration-500"
+                  style={{
+                    width: `${((sliderAvg ?? (selectedValue as number) ?? 5) / 10) * 100}%`,
+                  }}
+                />
+              </div>
+              <div className="flex justify-between mt-1 text-[10px] text-muted-foreground">
+                <span>1</span>
+                <span>10</span>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {uiOptions.map((option) => {
+                const isSelected =
+                  selectedValue === option.id ||
+                  (Array.isArray(selectedValue) && selectedValue.includes(option.id));
+                return (
+                  <div key={option.id}>
+                    <div className="flex items-center justify-between mb-1">
+                      <span
+                        className={`text-sm font-medium ${isSelected ? "text-foreground" : "text-muted-foreground"}`}
+                      >
+                        {option.label}
+                        {isSelected && <span className="ml-2 text-xs text-primary">내 선택</span>}
+                      </span>
+                      <span className="text-sm font-bold" style={{ color: option.color }}>
+                        {option.percent}%
+                      </span>
+                    </div>
+                    <div className="h-2 bg-muted rounded-full overflow-hidden">
+                      <div
+                        className="h-full rounded-full transition-all duration-500"
+                        style={{ width: `${option.percent}%`, backgroundColor: option.color }}
+                      />
+                    </div>
                   </div>
-                  <div className="h-2 bg-muted rounded-full overflow-hidden">
-                    <div
-                      className="h-full rounded-full transition-all duration-500"
-                      style={{ width: `${option.percent}%`, backgroundColor: option.color }}
-                    />
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+                );
+              })}
+            </div>
+          )}
           <p className="text-xs text-muted-foreground mt-3 text-center">
             총 {poll.totalVotes.toLocaleString()}명 참여
           </p>
@@ -546,6 +637,7 @@ export function PollDetailClient({
             <button
               type="button"
               className="flex items-center gap-1 hover:text-primary transition-colors"
+              onClick={() => handleLikeComment(comment.id)}
             >
               <ThumbsUp className={iconSize} />
               <span>{comment.likes}</span>
@@ -560,6 +652,15 @@ export function PollDetailClient({
             >
               답글
             </button>
+            {currentUserId && comment.userId === currentUserId && (
+              <button
+                type="button"
+                className="hover:text-destructive transition-colors"
+                onClick={() => handleDeleteComment(comment.id)}
+              >
+                삭제
+              </button>
+            )}
           </div>
 
           {/* 답글 입력 */}
@@ -755,7 +856,7 @@ export function PollDetailClient({
       {renderResultsUI()}
 
       {/* Comments Section */}
-      {hasVoted && topLevelComments.length > 0 && (
+      {topLevelComments.length > 0 && (
         <section className="px-4 mt-6">
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-sm font-semibold text-foreground">
@@ -890,6 +991,24 @@ export function PollDetailClient({
           </div>
         )}
       </div>
+
+      {/* Confirm Dialog */}
+      <Dialog open={!!confirmDialog} onOpenChange={(open) => !open && setConfirmDialog(null)}>
+        <DialogContent className="max-w-xs rounded-xl">
+          <DialogHeader>
+            <DialogTitle>{confirmDialog?.title}</DialogTitle>
+            <DialogDescription>{confirmDialog?.description}</DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex-row gap-2">
+            <Button variant="outline" className="flex-1" onClick={() => setConfirmDialog(null)}>
+              취소
+            </Button>
+            <Button variant="destructive" className="flex-1" onClick={confirmDialog?.onConfirm}>
+              삭제
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
