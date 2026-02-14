@@ -34,16 +34,21 @@ export type PollSortMode = "popular" | "recent" | "ending_soon" | "closed";
 export type HotDebateData = {
   id: string;
   title: string;
-  proLabel: string;
-  conLabel: string;
-  proPercent: number;
-  conPercent: number;
+  pollType?: string;
+  // binary/yesno 전용
+  proLabel?: string;
+  conLabel?: string;
+  proPercent?: number;
+  conPercent?: number;
+  // 다중 옵션 타입
+  options?: { id: string; label: string; percent: number; color: string }[];
+  // 공통
   totalVotes: number;
   comments: {
     id: string;
     author: string;
     content: string;
-    side: "pro" | "con";
+    side: "pro" | "con" | string;
     likes: number;
   }[];
 };
