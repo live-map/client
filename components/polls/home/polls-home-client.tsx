@@ -60,8 +60,10 @@ export function PollsHomeClient({ polls, hotDebate, suggested }: PollsHomeClient
     createdAt: formatRelativeTime(p.createdAt),
   }));
 
-  // HotDebate - add pollType for the component
-  const hotDebateWithType = hotDebate ? { ...hotDebate, pollType: "binary" as const } : null;
+  // HotDebate - use pollType from API response (fallback to "binary" for backward compat)
+  const hotDebateWithType = hotDebate
+    ? { ...hotDebate, pollType: (hotDebate.pollType ?? "binary") as const }
+    : null;
 
   return (
     <>
