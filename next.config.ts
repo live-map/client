@@ -43,6 +43,11 @@ const nextConfig: NextConfig = {
         hostname: "**", // OG images from news sites (poll thumbnails)
         pathname: "/**",
       },
+      {
+        protocol: "http",
+        hostname: "**", // OG images served over HTTP
+        pathname: "/**",
+      },
     ],
   },
 
