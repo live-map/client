@@ -28,6 +28,21 @@ const nextConfig: NextConfig = {
         hostname: "images.unsplash.com", // Mock poll images
         pathname: "/**",
       },
+      {
+        protocol: "https",
+        hostname: "oaidalleapiprodscus.blob.core.windows.net", // DALL-E generated
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
+        hostname: "*.s3.ap-northeast-2.amazonaws.com", // S3 uploads
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
+        hostname: "**", // OG images from news sites (poll thumbnails)
+        pathname: "/**",
+      },
     ],
   },
 
