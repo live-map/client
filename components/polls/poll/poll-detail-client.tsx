@@ -15,6 +15,7 @@ import {
   Pencil,
   Trash2,
 } from "lucide-react";
+import DOMPurify from "dompurify";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -97,7 +98,7 @@ function MarkdownRenderer({ content }: { content: string }) {
             key={currentIndex++}
             className="text-base font-bold text-foreground mt-4 mb-2 leading-tight"
           >
-            {line.replace("## ", "")}
+            {line.slice(3)}
           </h2>
         );
         continue;
@@ -106,7 +107,7 @@ function MarkdownRenderer({ content }: { content: string }) {
       if (line.startsWith("### ")) {
         elements.push(
           <h3 key={currentIndex++} className="text-sm font-semibold text-foreground mt-3 mb-1.5">
-            {line.replace("### ", "")}
+            {line.slice(4)}
           </h3>
         );
         continue;
@@ -190,12 +191,18 @@ function MarkdownRenderer({ content }: { content: string }) {
 
   const parseInline = (text: string) => {
     const escaped = escapeHtml(text);
-    return escaped
+    const html = escaped
       .replace(/\*\*(.*?)\*\*/g, '<strong class="font-medium text-foreground">$1</strong>')
       .replace(
         /\[(.*?)\]\((https?:\/\/[^\)]*)\)/g,
         '<a href="$2" target="_blank" rel="noopener noreferrer" class="text-primary hover:underline">$1</a>'
       );
+    return DOMPurify.sanitize(html, {
+      ALLOWED_TAGS: ["strong", "a"],
+      ALLOWED_ATTR: ["href", "target", "rel", "class"],
+      ALLOW_DATA_ATTR: false,
+      ALLOWED_URI_REGEXP: /^https?:\/\//i,
+    });
   };
 
   return <article className="prose-custom">{parseMarkdown(content)}</article>;
@@ -1003,7 +1010,12 @@ export function PollDetailClient({
             <Button variant="outline" className="flex-1" onClick={() => setConfirmDialog(null)}>
               취소
             </Button>
-            <Button variant="destructive" className="flex-1" onClick={confirmDialog?.onConfirm}>
+            <Button
+              variant="destructive"
+              className="flex-1"
+              disabled={isPending}
+              onClick={confirmDialog?.onConfirm}
+            >
               삭제
             </Button>
           </DialogFooter>

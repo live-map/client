@@ -5,8 +5,6 @@ import { Search, ChevronRight, Users } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 
-type SortType = "popular" | "latest" | "ending";
-
 interface Poll {
   id: string;
   title: string;
@@ -14,7 +12,6 @@ interface Poll {
   image?: string;
   totalVotes: number;
   endDate?: string;
-  createdAt?: string;
 }
 
 interface PollListProps {
@@ -25,28 +22,12 @@ interface PollListProps {
 const categoryFilters = ["전체", "정치", "경제", "사회", "IT/기술", "문화", "스포츠"];
 
 export function PollList({ polls, onPollClick }: PollListProps) {
-  const [sortType, setSortType] = useState<SortType>("popular");
   const [categoryFilter, setCategoryFilter] = useState("전체");
   const [searchQuery, setSearchQuery] = useState("");
 
-  const sortOptions: { value: SortType; label: string }[] = [
-    { value: "popular", label: "인기순" },
-    { value: "latest", label: "최신순" },
-    { value: "ending", label: "마감임박" },
-  ];
-
   const filteredPolls = polls
     .filter((poll) => poll.title.toLowerCase().includes(searchQuery.toLowerCase()))
-    .filter((poll) => categoryFilter === "전체" || poll.category === categoryFilter)
-    .sort((a, b) => {
-      if (sortType === "popular") return b.totalVotes - a.totalVotes;
-      if (sortType === "latest")
-        return new Date(b.createdAt ?? 0).getTime() - new Date(a.createdAt ?? 0).getTime();
-      // "ending" — nearest endDate first, no endDate goes last
-      const aEnd = a.endDate ? new Date(a.endDate).getTime() : Infinity;
-      const bEnd = b.endDate ? new Date(b.endDate).getTime() : Infinity;
-      return aEnd - bEnd;
-    });
+    .filter((poll) => categoryFilter === "전체" || poll.category === categoryFilter);
 
   return (
     <section className="px-4 py-3">
@@ -62,27 +43,8 @@ export function PollList({ polls, onPollClick }: PollListProps) {
         />
       </div>
 
-      {/* Sort & Filter */}
-      <div className="space-y-2 mb-3">
-        {/* Sort Tabs */}
-        <div className="flex gap-2">
-          {sortOptions.map((option) => (
-            <button
-              key={option.value}
-              type="button"
-              onClick={() => setSortType(option.value)}
-              className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
-                sortType === option.value
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-muted text-muted-foreground hover:bg-muted/80"
-              }`}
-            >
-              {option.label}
-            </button>
-          ))}
-        </div>
-
-        {/* Category Filter */}
+      {/* Category Filter */}
+      <div className="mb-3">
         <div className="flex gap-1.5 overflow-x-auto scrollbar-hide pb-1">
           {categoryFilters.map((category) => (
             <button

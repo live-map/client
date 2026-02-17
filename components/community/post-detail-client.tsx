@@ -9,6 +9,16 @@ import { toast } from "sonner";
 import { likePost, unlikePost, deletePost } from "@/lib/api";
 import { formatRelativeTime } from "@/lib/utils/format";
 import { CommentSection } from "./comment-section";
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import type { PostResponse, CommentTreeResponse } from "@/generated/openapi-client/types.gen";
 
 interface PostDetailClientProps {
@@ -26,8 +36,6 @@ export function PostDetailClient({ post, initialComments }: PostDetailClientProp
   const isOwner = session?.user?.id === post.user_id;
 
   const handleDelete = async () => {
-    if (!confirm("게시글을 삭제하시겠습니까?")) return;
-
     setIsDeleting(true);
     const { error } = await deletePost(post.id);
     if (error) {
@@ -69,15 +77,44 @@ export function PostDetailClient({ post, initialComments }: PostDetailClientProp
           뒤로가기
         </button>
         {isOwner && (
-          <button
-            type="button"
-            onClick={handleDelete}
-            disabled={isDeleting}
-            className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-destructive transition-colors disabled:opacity-50"
-          >
-            <Trash2 className="w-4 h-4" />
-            <span>{isDeleting ? "삭제 중..." : "삭제"}</span>
-          </button>
+          <Dialog>
+            <DialogTrigger asChild>
+              <button
+                type="button"
+                disabled={isDeleting}
+                className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-destructive transition-colors disabled:opacity-50"
+              >
+                <Trash2 className="w-4 h-4" />
+                <span>{isDeleting ? "삭제 중..." : "삭제"}</span>
+              </button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>게시글 삭제</DialogTitle>
+                <DialogDescription>
+                  게시글을 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.
+                </DialogDescription>
+              </DialogHeader>
+              <DialogFooter>
+                <DialogClose asChild>
+                  <button
+                    type="button"
+                    className="px-4 py-2 text-sm rounded-md border border-border hover:bg-muted transition-colors"
+                  >
+                    취소
+                  </button>
+                </DialogClose>
+                <button
+                  type="button"
+                  onClick={handleDelete}
+                  disabled={isDeleting}
+                  className="px-4 py-2 text-sm rounded-md bg-destructive text-destructive-foreground hover:bg-destructive/90 transition-colors disabled:opacity-50"
+                >
+                  삭제
+                </button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         )}
       </div>
 

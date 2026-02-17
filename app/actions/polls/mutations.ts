@@ -1,5 +1,6 @@
 "use server";
 
+import { updateTag } from "next/cache";
 import {
   castVote as apiCastVote,
   createPoll as apiCreatePoll,
@@ -77,6 +78,8 @@ export async function castVote(dto: {
       return { error: getVoteErrorMessage(status, error), status };
     }
 
+    updateTag(`poll-${dto.pollId}`);
+    updateTag("polls");
     return {};
   } catch {
     return { error: "서버 연결에 실패했습니다" };
@@ -97,6 +100,7 @@ export async function createPollComment(
       return { error: getCommentErrorMessage(status, error), status };
     }
 
+    updateTag(`poll-${pollId}`);
     return {};
   } catch {
     return { error: "서버 연결에 실패했습니다" };
@@ -126,6 +130,7 @@ export async function createPoll(dto: {
       return { error };
     }
 
+    updateTag("polls");
     return {};
   } catch {
     return { error: "여론조사 생성 중 오류가 발생했습니다." };
@@ -146,6 +151,8 @@ export async function updatePoll(
       return { error };
     }
 
+    updateTag(`poll-${id}`);
+    updateTag("polls");
     return {};
   } catch {
     return { error: "여론조사 수정 중 오류가 발생했습니다." };
@@ -163,6 +170,7 @@ export async function deletePoll(id: string): Promise<ActionResult> {
       return { error };
     }
 
+    updateTag("polls");
     return { data: null };
   } catch {
     return { error: "여론조사 삭제 중 오류가 발생했습니다." };
@@ -192,6 +200,7 @@ export async function likePollComment(
     if (error) {
       return { error: getCommentErrorMessage(status, error), status };
     }
+    updateTag(`poll-${pollId}`);
     return { data: data as { likes: number } };
   } catch {
     return { error: "서버 연결에 실패했습니다" };
@@ -207,6 +216,7 @@ export async function deletePollComment(pollId: string, commentId: string): Prom
     if (error) {
       return { error: getCommentErrorMessage(status, error), status };
     }
+    updateTag(`poll-${pollId}`);
     return { data: null };
   } catch {
     return { error: "댓글 삭제 중 오류가 발생했습니다" };

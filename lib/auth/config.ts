@@ -30,10 +30,16 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       }
       // OAuth 사용자는 DB에서 role 조회 (role이 없는 경우)
       if (token.id && !token.role) {
-        const { rows } = await pool.query("SELECT role FROM users WHERE id = $1", [token.id]);
-        const dbUser = rows[0];
-        if (dbUser) {
-          token.role = dbUser.role;
+        try {
+          const { rows } = await pool.query("SELECT role FROM users WHERE id = $1", [token.id]);
+          const dbUser = rows[0];
+          if (dbUser) {
+            token.role = dbUser.role;
+          } else {
+            token.role = "USER";
+          }
+        } catch {
+          token.role = "USER";
         }
       }
       return token;

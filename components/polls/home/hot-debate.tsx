@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Flame, Users, MessageCircle } from "lucide-react";
 import type { PollType } from "@/components/polls/types/poll-types";
 
@@ -98,16 +98,20 @@ export function HotDebate({ debate, onClick }: HotDebateProps) {
   ]);
 
   // Rotate comments
+  const timeoutRef = useRef<ReturnType<typeof setTimeout>>(undefined);
   useEffect(() => {
     const interval = setInterval(() => {
       setIsAnimating(true);
-      setTimeout(() => {
+      timeoutRef.current = setTimeout(() => {
         setCurrentCommentIndex((prev) => (prev + 1) % debate.comments.length);
         setIsAnimating(false);
       }, 300);
     }, 4000);
 
-    return () => clearInterval(interval);
+    return () => {
+      clearInterval(interval);
+      clearTimeout(timeoutRef.current);
+    };
   }, [debate.comments.length]);
 
   // liveCount는 실제 totalVotes를 반영

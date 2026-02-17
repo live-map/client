@@ -56,7 +56,7 @@ async function getAuthToken(): Promise<string | null> {
 
 async function apiFetch<T>(
   path: string,
-  options?: RequestInit
+  options?: RequestInit & { next?: NextFetchRequestConfig }
 ): Promise<{ data: T | null; error: string | null; status?: number }> {
   try {
     const token = await getAuthToken();
@@ -68,9 +68,11 @@ async function apiFetch<T>(
       headers["Authorization"] = `Bearer ${token}`;
     }
 
+    const { next: nextConfig, ...restOptions } = options ?? {};
     const res = await fetch(`${API_BASE}${path}`, {
-      ...options,
+      ...restOptions,
       headers,
+      ...(nextConfig ? { next: nextConfig } : {}),
     });
     if (!res.ok) {
       const body = await res.json().catch(() => ({}));
@@ -101,19 +103,27 @@ export const getPollFeed = async (
 ) => {
   const params = new URLSearchParams({ sort, limit: String(limit), offset: String(offset) });
   if (search) params.set("search", search);
-  return apiFetch(`/api/v1/polls?${params}`);
+  return apiFetch(`/api/v1/polls?${params}`, {
+    next: { tags: ["polls"], revalidate: 60 },
+  });
 };
 
 export const getHotDebate = async () => {
-  return apiFetch("/api/v1/polls/hot-debate");
+  return apiFetch("/api/v1/polls/hot-debate", {
+    next: { tags: ["polls", "hot-debate"], revalidate: 60 },
+  });
 };
 
 export const getSuggestedPolls = async (limit = 10) => {
-  return apiFetch(`/api/v1/polls/suggested?limit=${limit}`);
+  return apiFetch(`/api/v1/polls/suggested?limit=${limit}`, {
+    next: { tags: ["polls", "suggested"], revalidate: 60 },
+  });
 };
 
 export const getPollById = async (pollId: string) => {
-  return apiFetch(`/api/v1/polls/${pollId}`);
+  return apiFetch(`/api/v1/polls/${pollId}`, {
+    next: { tags: ["polls", `poll-${pollId}`], revalidate: 30 },
+  });
 };
 
 export const createPoll = async (body: {

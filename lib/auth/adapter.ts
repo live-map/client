@@ -2,6 +2,8 @@ import type { Adapter, AdapterUser, AdapterAccount } from "next-auth/adapters";
 import { createId } from "@paralleldrive/cuid2";
 import type { Pool } from "pg";
 
+const DEFAULT_ROLE = "USER" as const;
+
 /** Map a DB row (snake_case) → NextAuth AdapterUser (camelCase) */
 function mapUser(row: Record<string, unknown>): AdapterUser {
   return {
@@ -10,7 +12,7 @@ function mapUser(row: Record<string, unknown>): AdapterUser {
     email: (row.email as string) ?? "",
     emailVerified: row.email_verified ? new Date(row.email_verified as string) : null,
     image: (row.image as string) ?? null,
-    role: (row.role as string) ?? "USER",
+    role: (row.role as string) ?? DEFAULT_ROLE,
   };
 }
 
@@ -22,7 +24,14 @@ export function PgAdapter(pool: Pool): Adapter {
         `INSERT INTO users (id, name, email, email_verified, image, role)
          VALUES ($1, $2, $3, $4, $5, $6)
          RETURNING *`,
-        [id, user.name ?? null, user.email, user.emailVerified ?? null, user.image ?? null, "USER"]
+        [
+          id,
+          user.name ?? null,
+          user.email,
+          user.emailVerified ?? null,
+          user.image ?? null,
+          DEFAULT_ROLE,
+        ]
       );
       return mapUser(rows[0]);
     },
@@ -67,6 +76,11 @@ export function PgAdapter(pool: Pool): Adapter {
       if (user.image !== undefined) {
         fields.push(`image = $${idx++}`);
         values.push(user.image);
+      }
+
+      if (fields.length === 0) {
+        const { rows } = await pool.query("SELECT * FROM users WHERE id = $1", [user.id]);
+        return mapUser(rows[0]);
       }
 
       values.push(user.id);

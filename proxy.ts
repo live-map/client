@@ -9,6 +9,14 @@ import { getToken } from "next-auth/jwt";
  *
  * @see https://authjs.dev/getting-started/session-management/protecting
  */
+
+/** Routes that require authentication */
+const PROTECTED_PATTERNS = [/^\/profile/, /^\/polls\/suggest\/new/, /^\/polls\/[^/]+\/edit/];
+
+function isProtectedRoute(pathname: string): boolean {
+  return PROTECTED_PATTERNS.some((pattern) => pattern.test(pathname));
+}
+
 export default async function proxy(request: NextRequest) {
   const { nextUrl } = request;
   const token = await getToken({ req: request, secret: process.env.AUTH_SECRET });
@@ -17,7 +25,6 @@ export default async function proxy(request: NextRequest) {
   // Route patterns
   const isApiAuth = nextUrl.pathname.startsWith("/api/auth");
   const isAuthPage = nextUrl.pathname.startsWith("/auth/");
-  const isProtected = nextUrl.pathname.startsWith("/profile");
 
   // Allow NextAuth API routes
   if (isApiAuth) return NextResponse.next();
@@ -28,7 +35,7 @@ export default async function proxy(request: NextRequest) {
   }
 
   // Redirect unauthenticated users from protected routes to signin
-  if (isProtected && !isLoggedIn) {
+  if (isProtectedRoute(nextUrl.pathname) && !isLoggedIn) {
     const callbackUrl = encodeURIComponent(nextUrl.pathname + nextUrl.search);
     return NextResponse.redirect(new URL(`/auth/signin?callbackUrl=${callbackUrl}`, nextUrl));
   }
