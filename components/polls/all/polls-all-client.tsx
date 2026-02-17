@@ -193,7 +193,13 @@ export function PollsAllClient({ initialPolls }: PollsAllClientProps) {
               <div className="flex items-center gap-3">
                 {poll.imageUrl && (
                   <div className="relative w-14 h-14 rounded-lg overflow-hidden flex-shrink-0 bg-muted">
-                    <Image src={poll.imageUrl} alt={poll.title} fill className="object-cover" />
+                    <Image
+                      src={poll.imageUrl}
+                      alt={poll.title}
+                      fill
+                      className="object-cover"
+                      unoptimized
+                    />
                   </div>
                 )}
                 <div className="flex-1 min-w-0">
