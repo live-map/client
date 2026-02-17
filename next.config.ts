@@ -38,16 +38,6 @@ const nextConfig: NextConfig = {
         hostname: "*.s3.ap-northeast-2.amazonaws.com", // S3 uploads
         pathname: "/**",
       },
-      {
-        protocol: "https",
-        hostname: "**", // OG images from news sites (poll thumbnails)
-        pathname: "/**",
-      },
-      {
-        protocol: "http",
-        hostname: "**", // OG images served over HTTP
-        pathname: "/**",
-      },
     ],
   },
 
@@ -65,6 +55,20 @@ const nextConfig: NextConfig = {
           { key: "X-Frame-Options", value: "SAMEORIGIN" },
           { key: "X-Content-Type-Options", value: "nosniff" },
           { key: "Referrer-Policy", value: "origin-when-cross-origin" },
+          {
+            key: "Content-Security-Policy",
+            value: [
+              "default-src 'self'",
+              "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
+              "style-src 'self' 'unsafe-inline'",
+              "img-src 'self' data: blob: https:",
+              "font-src 'self' data:",
+              "connect-src 'self' https:",
+              "frame-ancestors 'self'",
+              "base-uri 'self'",
+              "form-action 'self'",
+            ].join("; "),
+          },
         ],
       },
     ];

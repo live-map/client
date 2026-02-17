@@ -15,6 +15,7 @@ import {
   Pencil,
   Trash2,
 } from "lucide-react";
+import DOMPurify from "dompurify";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -190,12 +191,18 @@ function MarkdownRenderer({ content }: { content: string }) {
 
   const parseInline = (text: string) => {
     const escaped = escapeHtml(text);
-    return escaped
+    const html = escaped
       .replace(/\*\*(.*?)\*\*/g, '<strong class="font-medium text-foreground">$1</strong>')
       .replace(
         /\[(.*?)\]\((https?:\/\/[^\)]*)\)/g,
         '<a href="$2" target="_blank" rel="noopener noreferrer" class="text-primary hover:underline">$1</a>'
       );
+    return DOMPurify.sanitize(html, {
+      ALLOWED_TAGS: ["strong", "a"],
+      ALLOWED_ATTR: ["href", "target", "rel", "class"],
+      ALLOW_DATA_ATTR: false,
+      ALLOWED_URI_REGEXP: /^https?:\/\//i,
+    });
   };
 
   return <article className="prose-custom">{parseMarkdown(content)}</article>;
