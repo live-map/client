@@ -43,7 +43,7 @@ import type {
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
 const AUTH_COOKIE_NAME =
-  process.env.NODE_ENV === "production" ? "__Secure-authjs.session-token" : "authjs.session-token";
+  process.env.NODE_ENV === "production" ? "__Secure-grapoll-access-token" : "grapoll-access-token";
 
 async function getAuthToken(): Promise<string | null> {
   try {

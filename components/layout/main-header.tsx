@@ -4,11 +4,11 @@ import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { User } from "lucide-react";
-import { signIn, useSession } from "next-auth/react";
+import { useAuth } from "@/lib/auth/auth-context";
 
 export function MainHeader() {
   const pathname = usePathname();
-  const { status } = useSession();
+  const { status } = useAuth();
   const [isVisible, setIsVisible] = useState(true);
   const [isAtTop, setIsAtTop] = useState(true);
   const lastScrollY = useRef(0);
@@ -84,14 +84,13 @@ export function MainHeader() {
               <span className="hidden sm:inline">마이페이지</span>
             </Link>
           ) : status === "unauthenticated" ? (
-            <button
-              type="button"
-              onClick={() => signIn()}
+            <Link
+              href="/auth/signin"
               className="flex items-center gap-1.5 px-2 py-1 text-xs text-muted-foreground hover:text-foreground hover:bg-foreground/5 rounded-md transition-colors"
             >
               <User className="w-3.5 h-3.5" />
               <span className="hidden sm:inline">로그인</span>
-            </button>
+            </Link>
           ) : null}
         </div>
       </div>

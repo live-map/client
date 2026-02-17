@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { signOut } from "next-auth/react";
+import { useAuth } from "@/lib/auth/auth-context";
 import {
   ArrowLeft,
   Settings,
@@ -31,6 +31,7 @@ interface ProfileClientProps {
 }
 
 export default function ProfileClient({ user, postCount, commentCount }: ProfileClientProps) {
+  const { logout } = useAuth();
   const joinDate = new Date(user.createdAt).toLocaleDateString("ko-KR", {
     year: "numeric",
     month: "long",
@@ -138,7 +139,10 @@ export default function ProfileClient({ user, postCount, commentCount }: Profile
           <Button
             variant="outline"
             className="w-full gap-2 text-red-500 border-red-200 hover:bg-red-50 hover:text-red-600 bg-transparent"
-            onClick={() => signOut({ callbackUrl: "/" })}
+            onClick={() => {
+              logout();
+              window.location.href = "/";
+            }}
           >
             <LogOut className="w-4 h-4" />
             로그아웃

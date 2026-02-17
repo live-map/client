@@ -6,9 +6,18 @@ import type {
   AddMediaToPostApiV1PostsPostIdMediaPostData,
   AddMediaToPostApiV1PostsPostIdMediaPostErrors,
   AddMediaToPostApiV1PostsPostIdMediaPostResponses,
+  CastVoteApiV1PollsPollIdVotePostData,
+  CastVoteApiV1PollsPollIdVotePostErrors,
+  CastVoteApiV1PollsPollIdVotePostResponses,
   CreateCommentApiV1CommentsPostData,
   CreateCommentApiV1CommentsPostErrors,
   CreateCommentApiV1CommentsPostResponses,
+  CreateCommentApiV1PollsPollIdCommentsPostData,
+  CreateCommentApiV1PollsPollIdCommentsPostErrors,
+  CreateCommentApiV1PollsPollIdCommentsPostResponses,
+  CreatePollApiV1PollsPostData,
+  CreatePollApiV1PollsPostErrors,
+  CreatePollApiV1PollsPostResponses,
   CreatePostApiV1PostsPostData,
   CreatePostApiV1PostsPostErrors,
   CreatePostApiV1PostsPostResponses,
@@ -18,6 +27,9 @@ import type {
   DeleteMediaFromPostApiV1PostsPostIdMediaMediaIdDeleteData,
   DeleteMediaFromPostApiV1PostsPostIdMediaMediaIdDeleteErrors,
   DeleteMediaFromPostApiV1PostsPostIdMediaMediaIdDeleteResponses,
+  DeletePollApiV1PollsPollIdDeleteData,
+  DeletePollApiV1PollsPollIdDeleteErrors,
+  DeletePollApiV1PollsPollIdDeleteResponses,
   DeletePostApiV1PostsPostIdDeleteData,
   DeletePostApiV1PostsPostIdDeleteErrors,
   DeletePostApiV1PostsPostIdDeleteResponses,
@@ -27,40 +39,51 @@ import type {
   GetCommentApiV1CommentsCommentIdGetData,
   GetCommentApiV1CommentsCommentIdGetErrors,
   GetCommentApiV1CommentsCommentIdGetResponses,
-  GetFeedApiV1FeedsFeedIdGetData,
-  GetFeedApiV1FeedsFeedIdGetErrors,
-  GetFeedApiV1FeedsFeedIdGetResponses,
-  GetFeedsApiV1FeedsGetData,
-  GetFeedsApiV1FeedsGetErrors,
-  GetFeedsApiV1FeedsGetResponses,
-  GetInvestigationStatusApiV1AgentStatusInvestigationIdGetData,
-  GetInvestigationStatusApiV1AgentStatusInvestigationIdGetErrors,
-  GetInvestigationStatusApiV1AgentStatusInvestigationIdGetResponses,
+  GetHotDebateApiV1PollsHotDebateGetData,
+  GetHotDebateApiV1PollsHotDebateGetResponses,
   GetMediaConfigApiV1MediaConfigGetData,
   GetMediaConfigApiV1MediaConfigGetResponses,
+  GetPollApiV1PollsPollIdGetData,
+  GetPollApiV1PollsPollIdGetErrors,
+  GetPollApiV1PollsPollIdGetResponses,
   GetPostApiV1PostsPostIdGetData,
   GetPostApiV1PostsPostIdGetErrors,
   GetPostApiV1PostsPostIdGetResponses,
   GetPostLikersApiV1PostsPostIdLikesGetData,
   GetPostLikersApiV1PostsPostIdLikesGetErrors,
   GetPostLikersApiV1PostsPostIdLikesGetResponses,
+  GetResearchStatusApiV1PollsPollIdResearchStatusGetData,
+  GetResearchStatusApiV1PollsPollIdResearchStatusGetErrors,
+  GetResearchStatusApiV1PollsPollIdResearchStatusGetResponses,
+  GetSuggestedPollsApiV1PollsSuggestedGetData,
+  GetSuggestedPollsApiV1PollsSuggestedGetErrors,
+  GetSuggestedPollsApiV1PollsSuggestedGetResponses,
+  GetUserVoteApiV1PollsPollIdVoteGetData,
+  GetUserVoteApiV1PollsPollIdVoteGetErrors,
+  GetUserVoteApiV1PollsPollIdVoteGetResponses,
   HardDeletePostApiV1PostsPostIdHardDeleteData,
   HardDeletePostApiV1PostsPostIdHardDeleteErrors,
   HardDeletePostApiV1PostsPostIdHardDeleteResponses,
   HealthCheckHealthGetData,
   HealthCheckHealthGetResponses,
+  IncrementViewCountApiV1PollsPollIdViewPostData,
+  IncrementViewCountApiV1PollsPollIdViewPostErrors,
+  IncrementViewCountApiV1PollsPollIdViewPostResponses,
   LikePostApiV1PostsPostIdLikePostData,
   LikePostApiV1PostsPostIdLikePostErrors,
   LikePostApiV1PostsPostIdLikePostResponses,
+  ListCommentsApiV1PollsPollIdCommentsGetData,
+  ListCommentsApiV1PollsPollIdCommentsGetErrors,
+  ListCommentsApiV1PollsPollIdCommentsGetResponses,
   ListCommentsFlatApiV1CommentsGetData,
   ListCommentsFlatApiV1CommentsGetErrors,
   ListCommentsFlatApiV1CommentsGetResponses,
   ListCommentsTreeApiV1CommentsTreeGetData,
   ListCommentsTreeApiV1CommentsTreeGetErrors,
   ListCommentsTreeApiV1CommentsTreeGetResponses,
-  ListInvestigationsApiV1AgentInvestigationsGetData,
-  ListInvestigationsApiV1AgentInvestigationsGetErrors,
-  ListInvestigationsApiV1AgentInvestigationsGetResponses,
+  ListPollsApiV1PollsGetData,
+  ListPollsApiV1PollsGetErrors,
+  ListPollsApiV1PollsGetResponses,
   ListPostsApiV1PostsGetData,
   ListPostsApiV1PostsGetErrors,
   ListPostsApiV1PostsGetResponses,
@@ -69,18 +92,18 @@ import type {
   ListRepliesApiV1CommentsCommentIdRepliesGetResponses,
   RootGetData,
   RootGetResponses,
-  StartInvestigationApiV1AgentInvestigatePostData,
-  StartInvestigationApiV1AgentInvestigatePostErrors,
-  StartInvestigationApiV1AgentInvestigatePostResponses,
-  TriggerScanApiV1AgentScanPostData,
-  TriggerScanApiV1AgentScanPostErrors,
-  TriggerScanApiV1AgentScanPostResponses,
+  TriggerResearchApiV1PollsPollIdResearchPostData,
+  TriggerResearchApiV1PollsPollIdResearchPostErrors,
+  TriggerResearchApiV1PollsPollIdResearchPostResponses,
   UnlikePostApiV1PostsPostIdLikeDeleteData,
   UnlikePostApiV1PostsPostIdLikeDeleteErrors,
   UnlikePostApiV1PostsPostIdLikeDeleteResponses,
   UpdateCommentApiV1CommentsCommentIdPatchData,
   UpdateCommentApiV1CommentsCommentIdPatchErrors,
   UpdateCommentApiV1CommentsCommentIdPatchResponses,
+  UpdatePollApiV1PollsPollIdPatchData,
+  UpdatePollApiV1PollsPollIdPatchErrors,
+  UpdatePollApiV1PollsPollIdPatchResponses,
   UpdatePostApiV1PostsPostIdPatchData,
   UpdatePostApiV1PostsPostIdPatchErrors,
   UpdatePostApiV1PostsPostIdPatchResponses,
@@ -102,123 +125,6 @@ export type Options<
    */
   meta?: Record<string, unknown>;
 };
-
-/**
- * Get Feeds
- *
- * Get list of verified news feeds.
- *
- * Filters:
- * - **category** (required): WAR or SECURITY
- * - **subCategory** (optional): ru-uk, is-ir, KOREA, CHINA, etc.
- * - **limit**: Max items to return (default 20, max 100)
- * - **offset**: Items to skip for pagination
- */
-export const getFeedsApiV1FeedsGet = <ThrowOnError extends boolean = false>(
-  options: Options<GetFeedsApiV1FeedsGetData, ThrowOnError>
-) =>
-  (options.client ?? client).get<
-    GetFeedsApiV1FeedsGetResponses,
-    GetFeedsApiV1FeedsGetErrors,
-    ThrowOnError
-  >({ url: "/api/v1/feeds", ...options });
-
-/**
- * Get Feed
- *
- * Get a single feed item by ID.
- *
- * - **feed_id**: The unique identifier of the feed item
- */
-export const getFeedApiV1FeedsFeedIdGet = <ThrowOnError extends boolean = false>(
-  options: Options<GetFeedApiV1FeedsFeedIdGetData, ThrowOnError>
-) =>
-  (options.client ?? client).get<
-    GetFeedApiV1FeedsFeedIdGetResponses,
-    GetFeedApiV1FeedsFeedIdGetErrors,
-    ThrowOnError
-  >({ url: "/api/v1/feeds/{feed_id}", ...options });
-
-/**
- * Start Investigation
- *
- * Start an autonomous investigation on a topic.
- *
- * The agent will:
- * 1. Create an investigation plan
- * 2. Search multiple sources (GDELT, Tavily, Telegram)
- * 3. Cross-verify collected information
- * 4. Generate a comprehensive report
- */
-export const startInvestigationApiV1AgentInvestigatePost = <ThrowOnError extends boolean = false>(
-  options: Options<StartInvestigationApiV1AgentInvestigatePostData, ThrowOnError>
-) =>
-  (options.client ?? client).post<
-    StartInvestigationApiV1AgentInvestigatePostResponses,
-    StartInvestigationApiV1AgentInvestigatePostErrors,
-    ThrowOnError
-  >({
-    url: "/api/v1/agent/investigate",
-    ...options,
-    headers: {
-      "Content-Type": "application/json",
-      ...options.headers,
-    },
-  });
-
-/**
- * Get Investigation Status
- *
- * Get the status and results of an investigation.
- */
-export const getInvestigationStatusApiV1AgentStatusInvestigationIdGet = <
-  ThrowOnError extends boolean = false,
->(
-  options: Options<GetInvestigationStatusApiV1AgentStatusInvestigationIdGetData, ThrowOnError>
-) =>
-  (options.client ?? client).get<
-    GetInvestigationStatusApiV1AgentStatusInvestigationIdGetResponses,
-    GetInvestigationStatusApiV1AgentStatusInvestigationIdGetErrors,
-    ThrowOnError
-  >({ url: "/api/v1/agent/status/{investigation_id}", ...options });
-
-/**
- * Trigger Scan
- *
- * Trigger a multi-source scan for events.
- *
- * Scans configured sources (GDELT, Twitter, Telegram) for recent events
- * matching the specified keywords.
- */
-export const triggerScanApiV1AgentScanPost = <ThrowOnError extends boolean = false>(
-  options: Options<TriggerScanApiV1AgentScanPostData, ThrowOnError>
-) =>
-  (options.client ?? client).post<
-    TriggerScanApiV1AgentScanPostResponses,
-    TriggerScanApiV1AgentScanPostErrors,
-    ThrowOnError
-  >({
-    url: "/api/v1/agent/scan",
-    ...options,
-    headers: {
-      "Content-Type": "application/json",
-      ...options.headers,
-    },
-  });
-
-/**
- * List Investigations
- *
- * List recent investigations.
- */
-export const listInvestigationsApiV1AgentInvestigationsGet = <ThrowOnError extends boolean = false>(
-  options?: Options<ListInvestigationsApiV1AgentInvestigationsGetData, ThrowOnError>
-) =>
-  (options?.client ?? client).get<
-    ListInvestigationsApiV1AgentInvestigationsGetResponses,
-    ListInvestigationsApiV1AgentInvestigationsGetErrors,
-    ThrowOnError
-  >({ url: "/api/v1/agent/investigations", ...options });
 
 /**
  * 게시글 목록 조회
@@ -583,6 +489,260 @@ export const generatePresignedUrlApiV1MediaPresignedUrlPost = <
       ...options.headers,
     },
   });
+
+/**
+ * 여론조사 목록 조회
+ *
+ * 여론조사 목록을 조회합니다.
+ */
+export const listPollsApiV1PollsGet = <ThrowOnError extends boolean = false>(
+  options?: Options<ListPollsApiV1PollsGetData, ThrowOnError>
+) =>
+  (options?.client ?? client).get<
+    ListPollsApiV1PollsGetResponses,
+    ListPollsApiV1PollsGetErrors,
+    ThrowOnError
+  >({
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/api/v1/polls",
+    ...options,
+  });
+
+/**
+ * 여론조사 생성 (제안)
+ *
+ * 새 여론조사를 생성합니다. 인증 필요.
+ */
+export const createPollApiV1PollsPost = <ThrowOnError extends boolean = false>(
+  options: Options<CreatePollApiV1PollsPostData, ThrowOnError>
+) =>
+  (options.client ?? client).post<
+    CreatePollApiV1PollsPostResponses,
+    CreatePollApiV1PollsPostErrors,
+    ThrowOnError
+  >({
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/api/v1/polls",
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...options.headers,
+    },
+  });
+
+/**
+ * 핫 디베이트 조회
+ *
+ * 가장 접전인 여론조사를 조회합니다 (모든 타입 지원).
+ */
+export const getHotDebateApiV1PollsHotDebateGet = <ThrowOnError extends boolean = false>(
+  options?: Options<GetHotDebateApiV1PollsHotDebateGetData, ThrowOnError>
+) =>
+  (options?.client ?? client).get<
+    GetHotDebateApiV1PollsHotDebateGetResponses,
+    unknown,
+    ThrowOnError
+  >({ url: "/api/v1/polls/hot-debate", ...options });
+
+/**
+ * 유저 제안 목록
+ *
+ * 유저가 제안한 여론조사 목록을 조회합니다.
+ */
+export const getSuggestedPollsApiV1PollsSuggestedGet = <ThrowOnError extends boolean = false>(
+  options?: Options<GetSuggestedPollsApiV1PollsSuggestedGetData, ThrowOnError>
+) =>
+  (options?.client ?? client).get<
+    GetSuggestedPollsApiV1PollsSuggestedGetResponses,
+    GetSuggestedPollsApiV1PollsSuggestedGetErrors,
+    ThrowOnError
+  >({ url: "/api/v1/polls/suggested", ...options });
+
+/**
+ * 여론조사 삭제
+ *
+ * 여론조사를 삭제합니다. 작성자만 가능.
+ */
+export const deletePollApiV1PollsPollIdDelete = <ThrowOnError extends boolean = false>(
+  options: Options<DeletePollApiV1PollsPollIdDeleteData, ThrowOnError>
+) =>
+  (options.client ?? client).delete<
+    DeletePollApiV1PollsPollIdDeleteResponses,
+    DeletePollApiV1PollsPollIdDeleteErrors,
+    ThrowOnError
+  >({
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/api/v1/polls/{poll_id}",
+    ...options,
+  });
+
+/**
+ * 여론조사 상세 조회
+ *
+ * 여론조사 상세 정보를 조회합니다.
+ */
+export const getPollApiV1PollsPollIdGet = <ThrowOnError extends boolean = false>(
+  options: Options<GetPollApiV1PollsPollIdGetData, ThrowOnError>
+) =>
+  (options.client ?? client).get<
+    GetPollApiV1PollsPollIdGetResponses,
+    GetPollApiV1PollsPollIdGetErrors,
+    ThrowOnError
+  >({
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/api/v1/polls/{poll_id}",
+    ...options,
+  });
+
+/**
+ * 여론조사 수정
+ *
+ * 여론조사를 수정합니다. 작성자만 가능.
+ */
+export const updatePollApiV1PollsPollIdPatch = <ThrowOnError extends boolean = false>(
+  options: Options<UpdatePollApiV1PollsPollIdPatchData, ThrowOnError>
+) =>
+  (options.client ?? client).patch<
+    UpdatePollApiV1PollsPollIdPatchResponses,
+    UpdatePollApiV1PollsPollIdPatchErrors,
+    ThrowOnError
+  >({
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/api/v1/polls/{poll_id}",
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...options.headers,
+    },
+  });
+
+/**
+ * 내 투표 조회
+ *
+ * 현재 사용자의 투표를 조회합니다.
+ */
+export const getUserVoteApiV1PollsPollIdVoteGet = <ThrowOnError extends boolean = false>(
+  options: Options<GetUserVoteApiV1PollsPollIdVoteGetData, ThrowOnError>
+) =>
+  (options.client ?? client).get<
+    GetUserVoteApiV1PollsPollIdVoteGetResponses,
+    GetUserVoteApiV1PollsPollIdVoteGetErrors,
+    ThrowOnError
+  >({
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/api/v1/polls/{poll_id}/vote",
+    ...options,
+  });
+
+/**
+ * 투표하기
+ *
+ * 여론조사에 투표합니다. 인증 필요.
+ */
+export const castVoteApiV1PollsPollIdVotePost = <ThrowOnError extends boolean = false>(
+  options: Options<CastVoteApiV1PollsPollIdVotePostData, ThrowOnError>
+) =>
+  (options.client ?? client).post<
+    CastVoteApiV1PollsPollIdVotePostResponses,
+    CastVoteApiV1PollsPollIdVotePostErrors,
+    ThrowOnError
+  >({
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/api/v1/polls/{poll_id}/vote",
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...options.headers,
+    },
+  });
+
+/**
+ * 댓글 목록 (트리)
+ *
+ * 여론조사 댓글을 트리 구조로 조회합니다.
+ */
+export const listCommentsApiV1PollsPollIdCommentsGet = <ThrowOnError extends boolean = false>(
+  options: Options<ListCommentsApiV1PollsPollIdCommentsGetData, ThrowOnError>
+) =>
+  (options.client ?? client).get<
+    ListCommentsApiV1PollsPollIdCommentsGetResponses,
+    ListCommentsApiV1PollsPollIdCommentsGetErrors,
+    ThrowOnError
+  >({ url: "/api/v1/polls/{poll_id}/comments", ...options });
+
+/**
+ * 댓글 작성
+ *
+ * 여론조사에 댓글을 작성합니다.
+ */
+export const createCommentApiV1PollsPollIdCommentsPost = <ThrowOnError extends boolean = false>(
+  options: Options<CreateCommentApiV1PollsPollIdCommentsPostData, ThrowOnError>
+) =>
+  (options.client ?? client).post<
+    CreateCommentApiV1PollsPollIdCommentsPostResponses,
+    CreateCommentApiV1PollsPollIdCommentsPostErrors,
+    ThrowOnError
+  >({
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/api/v1/polls/{poll_id}/comments",
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...options.headers,
+    },
+  });
+
+/**
+ * 팩트 리서치 트리거 (관리자)
+ *
+ * 여론조사에 대한 팩트 리서치를 비동기로 시작합니다. 관리자 전용.
+ */
+export const triggerResearchApiV1PollsPollIdResearchPost = <ThrowOnError extends boolean = false>(
+  options: Options<TriggerResearchApiV1PollsPollIdResearchPostData, ThrowOnError>
+) =>
+  (options.client ?? client).post<
+    TriggerResearchApiV1PollsPollIdResearchPostResponses,
+    TriggerResearchApiV1PollsPollIdResearchPostErrors,
+    ThrowOnError
+  >({
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/api/v1/polls/{poll_id}/research",
+    ...options,
+  });
+
+/**
+ * 리서치 상태 조회 (관리자)
+ *
+ * 여론조사 팩트 리서치의 진행 상태를 조회합니다. 관리자 전용.
+ */
+export const getResearchStatusApiV1PollsPollIdResearchStatusGet = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<GetResearchStatusApiV1PollsPollIdResearchStatusGetData, ThrowOnError>
+) =>
+  (options.client ?? client).get<
+    GetResearchStatusApiV1PollsPollIdResearchStatusGetResponses,
+    GetResearchStatusApiV1PollsPollIdResearchStatusGetErrors,
+    ThrowOnError
+  >({
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/api/v1/polls/{poll_id}/research/status",
+    ...options,
+  });
+
+/**
+ * 조회수 증가
+ *
+ * 여론조사 조회수를 증가시킵니다.
+ */
+export const incrementViewCountApiV1PollsPollIdViewPost = <ThrowOnError extends boolean = false>(
+  options: Options<IncrementViewCountApiV1PollsPollIdViewPostData, ThrowOnError>
+) =>
+  (options.client ?? client).post<
+    IncrementViewCountApiV1PollsPollIdViewPostResponses,
+    IncrementViewCountApiV1PollsPollIdViewPostErrors,
+    ThrowOnError
+  >({ url: "/api/v1/polls/{poll_id}/view", ...options });
 
 /**
  * Health Check
