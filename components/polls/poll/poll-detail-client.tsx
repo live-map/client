@@ -335,6 +335,8 @@ export function PollDetailClient({
     description: string;
     onConfirm: () => void;
   } | null>(null);
+  // Optimistic comment likes: commentId → likes count
+  const [commentLikes, setCommentLikes] = useState<Map<string, number>>(new Map());
 
   // 조회수 증가
   useEffect(() => {
@@ -465,18 +467,38 @@ export function PollDetailClient({
     });
   };
 
-  const handleLikeComment = (commentId: string) => {
+  const handleLikeComment = (commentId: string, currentLikes: number) => {
     if (!isLoggedIn) {
       openLoginModal("좋아요를 누르려면 로그인이 필요합니다");
       return;
     }
+    // Optimistic update
+    setCommentLikes((prev) => {
+      const next = new Map(prev);
+      const current = next.get(commentId) ?? currentLikes;
+      next.set(commentId, current + 1);
+      return next;
+    });
     startTransition(async () => {
       const result = await likePollComment(poll.id, commentId);
       if (result.error) {
+        // Revert on error
+        setCommentLikes((prev) => {
+          const next = new Map(prev);
+          next.delete(commentId);
+          return next;
+        });
         toast.error(result.error);
         return;
       }
-      router.refresh();
+      // Set server-confirmed value
+      if (result.data?.likes != null) {
+        setCommentLikes((prev) => {
+          const next = new Map(prev);
+          next.set(commentId, result.data.likes);
+          return next;
+        });
+      }
     });
   };
 
@@ -512,7 +534,7 @@ export function PollDetailClient({
             return;
           }
           toast.success("여론조사가 삭제되었습니다");
-          router.push("/polls");
+          router.push("/");
         });
       },
     });
@@ -644,10 +666,10 @@ export function PollDetailClient({
             <button
               type="button"
               className="flex items-center gap-1 hover:text-primary transition-colors"
-              onClick={() => handleLikeComment(comment.id)}
+              onClick={() => handleLikeComment(comment.id, comment.likes)}
             >
               <ThumbsUp className={iconSize} />
-              <span>{comment.likes}</span>
+              <span>{commentLikes.get(comment.id) ?? comment.likes}</span>
             </button>
             <button
               type="button"

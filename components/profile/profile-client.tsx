@@ -40,7 +40,7 @@ export default function ProfileClient({ user, postCount, commentCount }: Profile
   const menuItems = [
     { icon: Bell, label: "알림 설정", href: "/profile/notifications" },
     { icon: Shield, label: "개인정보 관리", href: "/profile/privacy" },
-    { icon: HelpCircle, label: "고객센터", href: "/polls/help" },
+    { icon: HelpCircle, label: "고객센터", href: "/polls/about" },
   ];
 
   return (
