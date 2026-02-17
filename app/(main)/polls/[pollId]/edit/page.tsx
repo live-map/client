@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useSession } from "next-auth/react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -19,6 +20,7 @@ import { updatePollSchema, type UpdatePollFormValues } from "@/lib/validations/p
 export default function PollEditPage() {
   const params = useParams<{ pollId: string }>();
   const router = useRouter();
+  const { data: session, status: authStatus } = useSession();
   const [isPending, startTransition] = useTransition();
   const [loading, setLoading] = useState(true);
 
@@ -27,12 +29,27 @@ export default function PollEditPage() {
     defaultValues: { title: "", description: "" },
   });
 
+  // Redirect unauthenticated users
   useEffect(() => {
+    if (authStatus === "unauthenticated") {
+      router.replace("/auth/signin");
+    }
+  }, [authStatus, router]);
+
+  useEffect(() => {
+    if (authStatus !== "authenticated") return;
+
     getPollById(params.pollId)
       .then((poll) => {
         if (!poll) {
           toast.error("여론조사를 찾을 수 없습니다");
           router.replace("/polls");
+          return;
+        }
+        // Verify ownership
+        if (poll.userId !== session?.user?.id) {
+          toast.error("수정 권한이 없습니다");
+          router.replace(`/polls/${params.pollId}`);
           return;
         }
         form.reset({
@@ -45,7 +62,7 @@ export default function PollEditPage() {
         toast.error("데이터를 불러오지 못했습니다");
         router.replace("/polls");
       });
-  }, [params.pollId, router, form]);
+  }, [params.pollId, router, form, authStatus, session?.user?.id]);
 
   const onSubmit = (data: UpdatePollFormValues) => {
     startTransition(async () => {

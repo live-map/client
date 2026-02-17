@@ -1,6 +1,7 @@
 "use client";
 
 import { SessionProvider } from "next-auth/react";
+import { ThemeProvider } from "next-themes";
 import { Toaster } from "@/components/ui/sonner";
 import { LoginModalProvider } from "@/components/auth/login-modal";
 
@@ -11,10 +12,12 @@ interface ProvidersProps {
 export function Providers({ children }: ProvidersProps) {
   return (
     <SessionProvider>
-      <LoginModalProvider>
-        {children}
-        <Toaster position="top-center" richColors />
-      </LoginModalProvider>
+      <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
+        <LoginModalProvider>
+          {children}
+          <Toaster position="top-center" richColors />
+        </LoginModalProvider>
+      </ThemeProvider>
     </SessionProvider>
   );
 }

@@ -6,7 +6,6 @@
 @source "../app/**/*.{ts,tsx}";
 
 @plugin "@tailwindcss/typography";
-@plugin "tailwindcss-animate";
 
 @custom-variant dark (&:is(.dark *));
 

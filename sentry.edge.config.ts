@@ -6,8 +6,8 @@ import * as Sentry from "@sentry/nextjs";
 Sentry.init({
   dsn: process.env.SENTRY_DSN,
 
-  // Adjust tracesSampleRate in production (1 = 100% sampling)
-  tracesSampleRate: 1,
+  // 100% in dev, 10% in production
+  tracesSampleRate: process.env.NODE_ENV === "production" ? 0.1 : 1.0,
 
   // Enable logs
   enableLogs: true,
