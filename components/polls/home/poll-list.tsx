@@ -80,6 +80,7 @@ export function PollList({ polls, onPollClick }: PollListProps) {
                   alt={poll.title}
                   fill
                   className="object-cover"
+                  unoptimized
                 />
               </div>
 
