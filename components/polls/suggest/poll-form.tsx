@@ -34,7 +34,7 @@ export function PollForm() {
       toast.error(result.error);
     } else {
       toast.success("여론조사가 등록되었습니다");
-      router.push("/polls");
+      router.push("/");
     }
   };
 

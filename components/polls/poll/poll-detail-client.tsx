@@ -23,6 +23,8 @@ import {
   createPollComment,
   incrementViewCount,
   deletePoll,
+  likePollComment,
+  deletePollComment,
 } from "@/app/actions/polls/mutations";
 import { FloatingVoteBar } from "@/components/polls/types/poll-types";
 import type { PollType, PollOption } from "@/components/polls/types/poll-types";
@@ -303,6 +305,8 @@ export function PollDetailClient({
   const [commentText, setCommentText] = useState("");
   const [replyingTo, setReplyingTo] = useState<string | null>(null);
   const [replyText, setReplyText] = useState("");
+  // Optimistic comment likes: commentId → likes count
+  const [commentLikes, setCommentLikes] = useState<Map<string, number>>(new Map());
 
   // 조회수 증가
   useEffect(() => {
@@ -433,6 +437,54 @@ export function PollDetailClient({
     });
   };
 
+  const handleLikeComment = (commentId: string, currentLikes: number) => {
+    if (!isLoggedIn) {
+      openLoginModal("좋아요를 누르려면 로그인이 필요합니다");
+      return;
+    }
+    // Optimistic update
+    setCommentLikes((prev) => {
+      const next = new Map(prev);
+      const current = next.get(commentId) ?? currentLikes;
+      next.set(commentId, current + 1);
+      return next;
+    });
+    startTransition(async () => {
+      const result = await likePollComment(poll.id, commentId);
+      if (result.error) {
+        // Revert on error
+        setCommentLikes((prev) => {
+          const next = new Map(prev);
+          next.delete(commentId);
+          return next;
+        });
+        toast.error(result.error);
+        return;
+      }
+      // Set server-confirmed value
+      if (result.data?.likes != null) {
+        setCommentLikes((prev) => {
+          const next = new Map(prev);
+          next.set(commentId, result.data.likes);
+          return next;
+        });
+      }
+    });
+  };
+
+  const handleDeleteComment = (commentId: string) => {
+    if (!confirm("댓글을 삭제하시겠습니까?")) return;
+    startTransition(async () => {
+      const result = await deletePollComment(poll.id, commentId);
+      if (result.error) {
+        toast.error(result.error);
+        return;
+      }
+      toast.success("댓글이 삭제되었습니다");
+      router.refresh();
+    });
+  };
+
   const handleDelete = () => {
     if (!confirm("정말 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.")) return;
     startTransition(async () => {
@@ -442,7 +494,7 @@ export function PollDetailClient({
         return;
       }
       toast.success("여론조사가 삭제되었습니다");
-      router.push("/polls");
+      router.push("/");
     });
   };
 
@@ -546,9 +598,10 @@ export function PollDetailClient({
             <button
               type="button"
               className="flex items-center gap-1 hover:text-primary transition-colors"
+              onClick={() => handleLikeComment(comment.id, comment.likes)}
             >
               <ThumbsUp className={iconSize} />
-              <span>{comment.likes}</span>
+              <span>{commentLikes.get(comment.id) ?? comment.likes}</span>
             </button>
             <button
               type="button"
@@ -560,6 +613,15 @@ export function PollDetailClient({
             >
               답글
             </button>
+            {currentUserId && comment.userId === currentUserId && (
+              <button
+                type="button"
+                className="hover:text-destructive transition-colors"
+                onClick={() => handleDeleteComment(comment.id)}
+              >
+                삭제
+              </button>
+            )}
           </div>
 
           {/* 답글 입력 */}

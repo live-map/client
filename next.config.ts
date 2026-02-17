@@ -28,6 +28,56 @@ const nextConfig: NextConfig = {
         hostname: "images.unsplash.com", // Mock poll images
         pathname: "/**",
       },
+      {
+        protocol: "https",
+        hostname: "oaidalleapiprodscus.blob.core.windows.net", // DALL-E generated
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
+        hostname: "*.s3.ap-northeast-2.amazonaws.com", // S3 uploads
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
+        hostname: "img.khan.co.kr", // 경향신문
+        pathname: "/**",
+      },
+      {
+        protocol: "http",
+        hostname: "news.kbs.co.kr", // KBS (http)
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
+        hostname: "news.kbs.co.kr", // KBS (https)
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
+        hostname: "www.mk.co.kr", // 매일경제
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
+        hostname: "www.hani.co.kr", // 한겨레
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
+        hostname: "www.joongang.co.kr", // 중앙일보
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
+        hostname: "flexible.img.hani.co.kr", // 한겨레 이미지 CDN
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
+        hostname: "pds.joongang.co.kr", // 중앙일보 이미지
+        pathname: "/**",
+      },
     ],
   },
 

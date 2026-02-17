@@ -133,6 +133,7 @@ export default function PollsAllPage() {
           <input
             type="text"
             placeholder="여론조사 검색..."
+            aria-label="여론조사 검색"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full pl-9 pr-4 py-2.5 bg-card border border-border rounded-xl text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"

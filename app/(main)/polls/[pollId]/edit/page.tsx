@@ -32,7 +32,7 @@ export default function PollEditPage() {
       .then((poll) => {
         if (!poll) {
           toast.error("여론조사를 찾을 수 없습니다");
-          router.replace("/polls");
+          router.replace("/");
           return;
         }
         form.reset({
@@ -43,7 +43,7 @@ export default function PollEditPage() {
       })
       .catch(() => {
         toast.error("데이터를 불러오지 못했습니다");
-        router.replace("/polls");
+        router.replace("/");
       });
   }, [params.pollId, router, form]);
 
@@ -56,6 +56,7 @@ export default function PollEditPage() {
       }
       toast.success("여론조사가 수정되었습니다");
       router.push(`/polls/${params.pollId}`);
+      router.refresh();
     });
   };
 
