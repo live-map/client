@@ -97,7 +97,7 @@ function MarkdownRenderer({ content }: { content: string }) {
             key={currentIndex++}
             className="text-base font-bold text-foreground mt-4 mb-2 leading-tight"
           >
-            {line.replace("## ", "")}
+            {line.slice(3)}
           </h2>
         );
         continue;
@@ -106,7 +106,7 @@ function MarkdownRenderer({ content }: { content: string }) {
       if (line.startsWith("### ")) {
         elements.push(
           <h3 key={currentIndex++} className="text-sm font-semibold text-foreground mt-3 mb-1.5">
-            {line.replace("### ", "")}
+            {line.slice(4)}
           </h3>
         );
         continue;
@@ -1003,7 +1003,12 @@ export function PollDetailClient({
             <Button variant="outline" className="flex-1" onClick={() => setConfirmDialog(null)}>
               취소
             </Button>
-            <Button variant="destructive" className="flex-1" onClick={confirmDialog?.onConfirm}>
+            <Button
+              variant="destructive"
+              className="flex-1"
+              disabled={isPending}
+              onClick={confirmDialog?.onConfirm}
+            >
               삭제
             </Button>
           </DialogFooter>

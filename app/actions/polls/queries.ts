@@ -25,7 +25,7 @@ export type PollCardData = {
   viewCount: number;
   createdAt: Date;
   endsAt: Date | null;
-  options: { id: string; text: string; voteCount: number }[];
+  options: { id: string; text: string; order: number; voteCount: number }[];
   user?: { name: string | null };
 };
 
@@ -94,6 +94,7 @@ export type PollWithDetails = {
     url: string;
     sourceType: string;
     description: string | null;
+    createdAt: string;
   }[];
   comments: PollCommentData[];
   user: { id: string | null; name: string | null; image: string | null } | null;
