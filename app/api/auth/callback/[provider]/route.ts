@@ -17,7 +17,7 @@ export async function GET(
   const searchParams = request.nextUrl.searchParams;
   const code = searchParams.get("code");
   const state = searchParams.get("state");
-  const callbackUrl = searchParams.get("callbackUrl") || "/";
+  const callbackUrl = request.cookies.get("auth-callback-url")?.value || "/";
 
   if (!code) {
     return NextResponse.redirect(new URL("/auth/signin?error=no_code", FRONTEND_URL));
@@ -43,6 +43,9 @@ export async function GET(
     const data = await res.json();
 
     const response = NextResponse.redirect(new URL(callbackUrl, FRONTEND_URL));
+
+    // 임시 callbackUrl 쿠키 삭제
+    response.cookies.delete("auth-callback-url");
 
     response.cookies.set(ACCESS_COOKIE, data.access_token, {
       httpOnly: true,

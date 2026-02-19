@@ -70,7 +70,7 @@ export function MainHeader() {
 }
 ```
 
-`useAuth()` 훅은 `AuthProvider`가 마운트 시 `GET /api/auth/me`를 호출하여 현재 인증 상태를 확인합니다.
+`useAuth()` 훅은 `AuthProvider`가 React 19 `use()` 훅을 통해 `GET /api/auth/me`를 호출하여 초기 인증 상태를 동기적으로 resolve합니다. "loading" 상태 없이 즉시 `authenticated` 또는 `unauthenticated`로 시작합니다.
 
 ---
 
@@ -243,23 +243,42 @@ return response;
 **위치**: `lib/auth/auth-context.tsx`
 
 ```tsx
-export function AuthProvider({ children }) {
-  const [user, setUser] = useState(null);
-  const [status, setStatus] = useState("loading");
+// Singleton promise — 한 번만 생성되어 렌더 간 공유
+let authPromise: Promise<AuthUser | null> | null = null;
 
-  useEffect(() => {
-    // GET /api/auth/me → 현재 사용자 정보 조회
-    fetch("/api/auth/me")
-      .then((res) => (res.ok ? res.json() : null))
-      .then((data) => {
-        setUser(data);
-        setStatus(data ? "authenticated" : "unauthenticated");
-      });
+function getAuthPromise() {
+  if (!authPromise) {
+    authPromise = fetchAuthUser(); // GET /api/auth/me
+  }
+  return authPromise;
+}
+
+export function AuthProvider({ children }) {
+  // React 19 use() 훅으로 초기 인증 상태를 동기적으로 resolve
+  const initialUser = use(getAuthPromise());
+
+  const [user, setUser] = useState<AuthUser | null>(initialUser);
+  const [status, setStatus] = useState<AuthStatus>(
+    initialUser ? "authenticated" : "unauthenticated"
+  );
+
+  const refreshAuth = useCallback(() => {
+    authPromise = null; // 캐시 무효화
+    fetchAuthUser().then((data) => {
+      setUser(data);
+      setStatus(data ? "authenticated" : "unauthenticated");
+    });
   }, []);
 
-  return <AuthContext.Provider value={{ user, status, logout }}>{children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider value={{ user, status, refreshAuth, logout }}>
+      {children}
+    </AuthContext.Provider>
+  );
 }
 ```
+
+> **Note**: React 19의 `use()` 훅을 사용하여 `useEffect` 대신 초기 마운트 시 인증 상태를 동기적으로 resolve합니다. 이 방식은 "loading" 상태 없이 즉시 `authenticated` 또는 `unauthenticated` 상태로 시작합니다.
 
 ### Server-Side: auth() 함수
 

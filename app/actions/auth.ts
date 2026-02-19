@@ -1,5 +1,6 @@
 "use server";
 
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
 const API_BASE = process.env.API_URL || "http://localhost:8000";
@@ -12,7 +13,16 @@ export async function signInWithOAuth(
   provider: "google" | "kakao",
   callbackUrl = "/"
 ): Promise<void> {
-  const redirectUri = `${FRONTEND_URL}/api/auth/callback/${provider}?callbackUrl=${encodeURIComponent(callbackUrl)}`;
+  // callbackUrl을 임시 쿠키에 저장 (redirect_uri에 포함하면 Google Console 등록 URI와 불일치)
+  const cookieStore = await cookies();
+  cookieStore.set("auth-callback-url", callbackUrl, {
+    path: "/",
+    maxAge: 600,
+    httpOnly: true,
+    sameSite: "lax",
+  });
+
+  const redirectUri = `${FRONTEND_URL}/api/auth/callback/${provider}`;
 
   const res = await fetch(
     `${API_BASE}/api/v1/auth/oauth/${provider}/authorize?redirect_uri=${encodeURIComponent(redirectUri)}`
