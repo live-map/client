@@ -70,7 +70,9 @@ export function PollsHomeClient({ polls, hotDebate, suggested }: PollsHomeClient
 
   return (
     <>
-      <HomeHero />
+      <div className="lg:hidden">
+        <HomeHero />
+      </div>
 
       {hotDebateWithType && (
         <HotDebate

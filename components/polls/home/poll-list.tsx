@@ -30,7 +30,7 @@ export function PollList({ polls, onPollClick }: PollListProps) {
     .filter((poll) => categoryFilter === "전체" || poll.category === categoryFilter);
 
   return (
-    <section className="px-4 py-3">
+    <section className="px-4 py-3 lg:px-0">
       {/* Search Bar */}
       <div className="relative mb-3">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -65,17 +65,17 @@ export function PollList({ polls, onPollClick }: PollListProps) {
       </div>
 
       {/* Poll List */}
-      <div className="space-y-2">
+      <div className="space-y-2 lg:space-y-3">
         {filteredPolls.map((poll) => (
           <button
             key={poll.id}
             type="button"
             onClick={() => onPollClick(poll.id)}
-            className="w-full bg-card border border-border rounded-2xl p-3 hover:shadow-md transition-all duration-200 hover:border-border/80 hover:-translate-y-0.5 text-left group"
+            className="w-full bg-card border border-border rounded-2xl p-3 lg:p-4 hover:shadow-md transition-all duration-200 hover:border-border/80 hover:-translate-y-0.5 text-left group"
           >
             <div className="flex items-center gap-3">
               {/* Left: Representative Image */}
-              <div className="relative w-14 h-14 rounded-xl overflow-hidden flex-shrink-0 bg-muted">
+              <div className="relative w-14 h-14 lg:w-20 lg:h-20 rounded-xl overflow-hidden flex-shrink-0 bg-muted">
                 <Image
                   src={poll.image || "/placeholder.svg"}
                   alt={poll.title}
@@ -89,10 +89,10 @@ export function PollList({ polls, onPollClick }: PollListProps) {
               <div className="flex-1 min-w-0">
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex-1 min-w-0">
-                    <span className="text-[10px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
+                    <span className="text-[10px] lg:text-xs text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
                       {poll.category}
                     </span>
-                    <h3 className="font-medium text-foreground text-sm mt-1 line-clamp-2 leading-snug">
+                    <h3 className="font-medium text-foreground text-sm lg:text-base mt-1 line-clamp-2 leading-snug">
                       {poll.title}
                     </h3>
                   </div>

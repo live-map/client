@@ -92,7 +92,7 @@ export function CommunitySection({ initialPosts, initialTotal }: CommunitySectio
   };
 
   return (
-    <div className="px-4 py-4">
+    <div className="px-4 py-4 lg:px-0">
       {/* Header */}
       <div className="flex items-center justify-between mb-3">
         <h2 className="text-base font-bold text-foreground">커뮤니티</h2>
@@ -171,7 +171,7 @@ export function CommunitySection({ initialPosts, initialTotal }: CommunitySectio
             <Link
               key={post.id}
               href={`/community/${post.id}`}
-              className="block w-full bg-card border border-border rounded-xl p-3 hover:shadow-sm hover:border-border/80 transition-all duration-200 text-left group"
+              className="block w-full bg-card border border-border rounded-xl p-3 lg:p-4 hover:shadow-sm hover:border-border/80 transition-all duration-200 text-left group"
             >
               <div className="flex items-start justify-between gap-2">
                 <div className="flex-1 min-w-0">
