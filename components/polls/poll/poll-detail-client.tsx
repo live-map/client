@@ -34,6 +34,7 @@ import {
   deletePoll,
   likePollComment,
   deletePollComment,
+  revalidatePoll,
 } from "@/app/actions/polls/mutations";
 import { FloatingVoteBar } from "@/components/polls/types/poll-types";
 import type { PollType, PollOption } from "@/components/polls/types/poll-types";
@@ -209,6 +210,148 @@ function MarkdownRenderer({ content }: { content: string }) {
 }
 
 // ========================================
+// Research Progress Component
+// ========================================
+
+const RESEARCH_STEPS = [
+  { key: "planning", label: "계획", description: "주제 관점을 분석하고 검색 전략을 수립합니다" },
+  { key: "searching", label: "검색", description: "웹, 학술, 팩트체크 출처를 수집합니다" },
+  { key: "analyzing", label: "분석", description: "수집된 자료를 종합 분석합니다" },
+  { key: "reviewing", label: "검토", description: "리포트의 정확성과 균형을 검토합니다" },
+] as const;
+
+function ResearchProgress({ pollId }: { pollId: string }) {
+  const router = useRouter();
+  const [status, setStatus] = useState<string>("pending");
+  const [currentStep, setCurrentStep] = useState<string | null>(null);
+
+  useEffect(() => {
+    const pollStatus = async () => {
+      try {
+        const res = await fetch(`/api/polls/${pollId}/research/status`);
+        if (!res.ok) return;
+        const data = await res.json();
+        setStatus(data.status);
+        if (data.currentStep || data.current_step) {
+          setCurrentStep(data.currentStep || data.current_step);
+        }
+      } catch {
+        // ignore fetch errors
+      }
+    };
+
+    pollStatus();
+    // Only poll repeatedly if research is actually running
+    const interval = setInterval(() => {
+      if (status === "running") pollStatus();
+    }, 2000);
+    return () => clearInterval(interval);
+  }, [pollId, status]);
+
+  useEffect(() => {
+    if (status === "completed") {
+      const timeout = setTimeout(async () => {
+        await revalidatePoll(pollId);
+        router.refresh();
+      }, 500);
+      return () => clearTimeout(timeout);
+    }
+  }, [status, pollId, router]);
+
+  // pending = 리서치가 아직 시작되지 않음 (또는 존재하지 않음) → 표시 안 함
+  if (status === "pending" || status === "failed") {
+    return null;
+  }
+
+  const stepIndex = RESEARCH_STEPS.findIndex((s) => s.key === currentStep);
+  const activeIndex = status === "completed" ? RESEARCH_STEPS.length : stepIndex;
+  const activeStep =
+    activeIndex >= 0 && activeIndex < RESEARCH_STEPS.length ? RESEARCH_STEPS[activeIndex] : null;
+
+  return (
+    <section className="px-4 mt-6">
+      <div className="bg-card border border-border rounded-xl p-4">
+        <div className="flex items-center gap-2 mb-4">
+          <div className="w-6 h-6 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center">
+            <span className="text-[10px] font-bold text-primary-foreground">AI</span>
+          </div>
+          <div>
+            <h2 className="text-sm font-semibold text-foreground">
+              {status === "completed" ? "팩트 리서치 완료" : "팩트 리서치 진행 중"}
+            </h2>
+            <p className="text-[10px] text-muted-foreground">
+              {status === "completed" ? "분석 완료!" : "AI가 다양한 출처를 조사하고 있습니다"}
+            </p>
+          </div>
+        </div>
+
+        {/* Steps with connector lines */}
+        <div className="flex items-start justify-between relative">
+          {RESEARCH_STEPS.map((step, i) => {
+            const isDone = i < activeIndex || status === "completed";
+            const isActive = i === activeIndex && status === "running";
+
+            return (
+              <div key={step.key} className="flex flex-col items-center gap-1.5 flex-1 relative">
+                {/* Connector line */}
+                {i < RESEARCH_STEPS.length - 1 && (
+                  <div className="absolute top-4 left-[calc(50%+16px)] right-[calc(-50%+16px)] h-0.5">
+                    <div
+                      className={`h-full rounded-full transition-all duration-500 ${
+                        isDone
+                          ? "bg-primary"
+                          : isActive
+                            ? "bg-gradient-to-r from-primary/50 to-muted"
+                            : "bg-muted"
+                      }`}
+                    />
+                  </div>
+                )}
+
+                {/* Circle */}
+                <div className="relative">
+                  <div
+                    className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-300 ${
+                      isDone
+                        ? "bg-primary text-primary-foreground"
+                        : isActive
+                          ? "bg-primary/20 text-primary ring-2 ring-primary/40 scale-110"
+                          : "bg-muted text-muted-foreground"
+                    }`}
+                  >
+                    {isDone ? "\u2713" : i + 1}
+                  </div>
+                  {/* Ping pulse for active step */}
+                  {isActive && (
+                    <div className="absolute inset-0 rounded-full bg-primary/20 animate-ping" />
+                  )}
+                </div>
+
+                {/* Label */}
+                <span
+                  className={`text-[10px] ${
+                    isDone || isActive ? "text-foreground font-medium" : "text-muted-foreground"
+                  }`}
+                >
+                  {step.label}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Active step description */}
+        {activeStep && status === "running" && (
+          <p className="text-[11px] text-muted-foreground text-center mt-3 animate-pulse">
+            {activeStep.description}
+          </p>
+        )}
+      </div>
+    </section>
+  );
+}
+
+// ========================================
 // Helpers
 // ========================================
 
@@ -362,11 +505,6 @@ export function PollDetailClient({
   }, []);
 
   const handleVote = (value: string | string[] | number | Record<string, number>) => {
-    if (!isLoggedIn) {
-      openLoginModal("투표하려면 로그인이 필요합니다");
-      return;
-    }
-
     const voteValue = value as string | string[] | number;
 
     startTransition(async () => {
@@ -388,11 +526,7 @@ export function PollDetailClient({
       const result = await castVote(dto);
 
       if (result.error) {
-        if (result.status === 401) {
-          openLoginModal("투표하려면 로그인이 필요합니다");
-        } else {
-          toast.error(result.error);
-        }
+        toast.error(result.error);
         return;
       }
 
@@ -492,10 +626,11 @@ export function PollDetailClient({
         return;
       }
       // Set server-confirmed value
-      if (result.data?.likes != null) {
+      const serverLikes = result.data?.likes;
+      if (serverLikes != null) {
         setCommentLikes((prev) => {
           const next = new Map(prev);
-          next.set(commentId, result.data.likes);
+          next.set(commentId, serverLikes);
           return next;
         });
       }
@@ -735,16 +870,29 @@ export function PollDetailClient({
   return (
     <div className="min-h-screen bg-background pb-24">
       {/* Header */}
-      <header className="sticky top-0 z-50 bg-background/95 backdrop-blur border-b border-border">
+      <header className="sticky top-0 z-50 bg-background/95 backdrop-blur border-b border-border lg:border-none lg:bg-transparent lg:backdrop-blur-none lg:relative">
         <div className="flex items-center justify-between px-4 h-12">
+          {/* Mobile: back button */}
           <button
             type="button"
             onClick={() => router.back()}
-            className="flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors"
+            className="flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors lg:hidden"
           >
             <ArrowLeft className="w-5 h-5" />
             <span className="text-sm">뒤로</span>
           </button>
+          {/* Desktop: breadcrumb */}
+          <nav className="hidden lg:flex items-center gap-1.5 text-sm text-muted-foreground">
+            <button
+              type="button"
+              onClick={() => router.push("/")}
+              className="hover:text-foreground transition-colors"
+            >
+              여론조사
+            </button>
+            <span>/</span>
+            <span className="text-foreground font-medium truncate max-w-[300px]">{poll.title}</span>
+          </nav>
           <div className="flex items-center gap-1">
             <button
               type="button"
@@ -845,180 +993,218 @@ export function PollDetailClient({
         </div>
       </section>
 
-      {/* AI Article Section */}
-      {poll.aiContent && (
-        <section className="px-4 mt-6">
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-2">
-              <div className="w-6 h-6 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center">
-                <span className="text-[10px] font-bold text-primary-foreground">AI</span>
+      {/* Content — AI Research + Comments (full width) */}
+      <div className="lg:mt-6">
+        <div>
+          {/* Research Progress */}
+          {!poll.aiContent && <ResearchProgress pollId={poll.id} />}
+
+          {/* AI Article Section */}
+          {poll.aiContent && (
+            <section className="px-4 mt-6 lg:px-0">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <div className="w-6 h-6 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center">
+                    <span className="text-[10px] font-bold text-primary-foreground">AI</span>
+                  </div>
+                  <div>
+                    <h2 className="text-sm font-semibold text-foreground">
+                      투표 전 알아두면 좋은 팩트
+                    </h2>
+                    {poll.aiUpdatedAt && (
+                      <p className="text-[10px] text-muted-foreground">
+                        {formatTimeAgo(poll.aiUpdatedAt)} 업데이트
+                      </p>
+                    )}
+                  </div>
+                </div>
               </div>
-              <div>
+              <MarkdownRenderer content={poll.aiContent} />
+            </section>
+          )}
+
+          {/* Sources */}
+          {poll.sources && poll.sources.length > 0 && (
+            <section className="px-4 mt-4 lg:px-0">
+              <h3 className="text-xs font-semibold text-muted-foreground mb-2">출처</h3>
+              <div className="flex flex-wrap gap-1.5">
+                {poll.sources.map((source) => (
+                  <InlineSource key={source.id} name={source.title} url={source.url} />
+                ))}
+              </div>
+            </section>
+          )}
+
+          {/* Results Section — 투표 후에만 표시 */}
+          {renderResultsUI()}
+
+          {/* Comments Section — 투표 후에만 표시 */}
+          {hasVoted && topLevelComments.length > 0 && (
+            <section className="px-4 mt-6 lg:px-0">
+              <div className="flex items-center justify-between mb-3">
                 <h2 className="text-sm font-semibold text-foreground">
-                  투표 전 알아두면 좋은 팩트
+                  댓글 {topLevelComments.length}개
                 </h2>
-                {poll.aiUpdatedAt && (
-                  <p className="text-[10px] text-muted-foreground">
-                    {formatTimeAgo(poll.aiUpdatedAt)} 업데이트
-                  </p>
-                )}
+              </div>
+              <div className="divide-y divide-border">
+                {topLevelComments.map((comment) => (
+                  <div key={comment.id} className="py-3 first:pt-0">
+                    {renderComment(comment)}
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
+
+          {/* Desktop inline comment input */}
+          {hasVoted && (
+            <div className="hidden lg:block px-0 mt-6">
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={commentText}
+                  onChange={(e) => setCommentText(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && !e.nativeEvent.isComposing && commentText.trim()) {
+                      handleComment();
+                    }
+                  }}
+                  placeholder="의견을 남겨보세요..."
+                  className="flex-1 px-3 py-2 text-sm bg-muted/50 border border-border rounded-lg focus:outline-none focus:ring-1 focus:ring-primary"
+                />
+                <Button
+                  size="sm"
+                  disabled={!commentText.trim() || isPending}
+                  onClick={handleComment}
+                  className="px-4"
+                >
+                  등록
+                </Button>
               </div>
             </div>
-          </div>
-          <MarkdownRenderer content={poll.aiContent} />
-        </section>
-      )}
+          )}
+        </div>
+      </div>
 
-      {/* Sources */}
-      {poll.sources && poll.sources.length > 0 && (
-        <section className="px-4 mt-4">
-          <h3 className="text-xs font-semibold text-muted-foreground mb-2">출처</h3>
-          <div className="flex flex-wrap gap-1.5">
-            {poll.sources.map((source) => (
-              <InlineSource key={source.id} name={source.title} url={source.url} />
-            ))}
-          </div>
-        </section>
-      )}
-
-      {/* Results Section */}
-      {renderResultsUI()}
-
-      {/* Comments Section */}
-      {topLevelComments.length > 0 && (
-        <section className="px-4 mt-6">
-          <div className="flex items-center justify-between mb-3">
-            <h2 className="text-sm font-semibold text-foreground">
-              댓글 {topLevelComments.length}개
-            </h2>
-          </div>
-          <div className="divide-y divide-border">
-            {topLevelComments.map((comment) => (
-              <div key={comment.id} className="py-3 first:pt-0">
-                {renderComment(comment)}
-              </div>
-            ))}
-          </div>
-        </section>
-      )}
-
-      {/* Floating Vote Bar */}
+      {/* Floating Vote Bar — always visible */}
       <div
-        className={`fixed bottom-0 left-0 right-0 bg-background/80 backdrop-blur-xl border-t border-border/50 shadow-[0_-4px_20px_rgba(0,0,0,0.08)] transition-all duration-300 ${
+        className={`fixed bottom-0 left-0 right-0 bg-background/80 backdrop-blur-xl border-t border-border/50 shadow-[0_-4px_20px_rgba(0,0,0,0.08)] transition-all duration-300 pb-[env(safe-area-inset-bottom)] z-40 ${
           showVoteBar ? "translate-y-0" : "translate-y-full"
         }`}
       >
-        {!hasVoted ? (
-          <FloatingVoteBar
-            pollType={pollType}
-            options={uiOptions}
-            onVote={handleVote}
-            scaleConfig={
-              pollType === "scale"
-                ? { min: 1, max: 10, labels: { min: "매우 불만족", max: "매우 만족" } }
-                : undefined
-            }
-          />
-        ) : (
-          <div className="px-4 py-2.5">
-            {voteBarExpanded ? (
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-xs text-muted-foreground">다시 투표하기</span>
-                  <button
-                    type="button"
-                    onClick={() => setVoteBarExpanded(false)}
-                    className="text-xs text-muted-foreground hover:text-foreground"
-                  >
-                    취소
-                  </button>
-                </div>
-                <FloatingVoteBar
-                  pollType={pollType}
-                  options={uiOptions}
-                  onVote={(value) => {
-                    handleVote(value);
-                    setVoteBarExpanded(false);
-                  }}
-                  scaleConfig={
-                    pollType === "scale"
-                      ? { min: 1, max: 10, labels: { min: "매우 불만족", max: "매우 만족" } }
-                      : undefined
-                  }
-                />
-              </div>
-            ) : (
-              <div>
-                <div className="flex items-center gap-2 mb-2">
-                  {typeof selectedValue === "string" && getOptionColor(selectedValue) && (
-                    <div
-                      className="w-2.5 h-2.5 rounded-full flex-shrink-0"
-                      style={{ backgroundColor: getOptionColor(selectedValue) }}
-                    />
-                  )}
-                  <span className="text-xs text-muted-foreground">
-                    {isExpired && !selectedValue && "마감된 여론조사입니다"}
-                    {typeof selectedValue === "string" && getOptionLabel(selectedValue) && (
-                      <>
-                        <span className="font-medium text-foreground">
-                          {getOptionLabel(selectedValue)}
-                        </span>
-                        에 투표함
-                      </>
-                    )}
-                    {typeof selectedValue === "number" && (
-                      <>
-                        <span className="font-medium text-foreground">{selectedValue}점</span>
-                        으로 투표함
-                      </>
-                    )}
-                    {Array.isArray(selectedValue) && (
-                      <>
-                        <span className="font-medium text-foreground">
-                          {selectedValue.length}개
-                        </span>{" "}
-                        선택함
-                      </>
-                    )}
-                  </span>
-                  {!isExpired && (
+        <div className="max-w-lg mx-auto lg:max-w-2xl">
+          {!hasVoted ? (
+            <FloatingVoteBar
+              pollType={pollType}
+              options={uiOptions}
+              onVote={handleVote}
+              scaleConfig={
+                pollType === "scale"
+                  ? { min: 1, max: 10, labels: { min: "매우 불만족", max: "매우 만족" } }
+                  : undefined
+              }
+            />
+          ) : (
+            <div className="px-4 py-2.5">
+              {voteBarExpanded ? (
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-xs text-muted-foreground">다시 투표하기</span>
                     <button
                       type="button"
-                      onClick={() => setVoteBarExpanded(true)}
-                      className="ml-auto text-[11px] text-primary hover:underline flex-shrink-0"
+                      onClick={() => setVoteBarExpanded(false)}
+                      className="text-xs text-muted-foreground hover:text-foreground"
                     >
-                      변경
+                      취소
                     </button>
-                  )}
-                </div>
-
-                {/* 댓글 입력 */}
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    value={commentText}
-                    onChange={(e) => setCommentText(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" && !e.nativeEvent.isComposing && commentText.trim()) {
-                        handleComment();
-                      }
+                  </div>
+                  <FloatingVoteBar
+                    pollType={pollType}
+                    options={uiOptions}
+                    onVote={(value) => {
+                      handleVote(value);
+                      setVoteBarExpanded(false);
                     }}
-                    placeholder="의견을 남겨보세요..."
-                    className="flex-1 px-3 py-2 text-sm bg-muted/50 border border-border rounded-lg focus:outline-none focus:ring-1 focus:ring-primary"
+                    scaleConfig={
+                      pollType === "scale"
+                        ? { min: 1, max: 10, labels: { min: "매우 불만족", max: "매우 만족" } }
+                        : undefined
+                    }
                   />
-                  <Button
-                    size="sm"
-                    disabled={!commentText.trim() || isPending}
-                    onClick={handleComment}
-                    className="px-4"
-                  >
-                    등록
-                  </Button>
                 </div>
-              </div>
-            )}
-          </div>
-        )}
+              ) : (
+                <div>
+                  <div className="flex items-center gap-2 mb-2">
+                    {typeof selectedValue === "string" && getOptionColor(selectedValue) && (
+                      <div
+                        className="w-2.5 h-2.5 rounded-full flex-shrink-0"
+                        style={{ backgroundColor: getOptionColor(selectedValue) }}
+                      />
+                    )}
+                    <span className="text-xs text-muted-foreground">
+                      {isExpired && !selectedValue && "마감된 여론조사입니다"}
+                      {typeof selectedValue === "string" && getOptionLabel(selectedValue) && (
+                        <>
+                          <span className="font-medium text-foreground">
+                            {getOptionLabel(selectedValue)}
+                          </span>
+                          에 투표함
+                        </>
+                      )}
+                      {typeof selectedValue === "number" && (
+                        <>
+                          <span className="font-medium text-foreground">{selectedValue}점</span>
+                          으로 투표함
+                        </>
+                      )}
+                      {Array.isArray(selectedValue) && (
+                        <>
+                          <span className="font-medium text-foreground">
+                            {selectedValue.length}개
+                          </span>{" "}
+                          선택함
+                        </>
+                      )}
+                    </span>
+                    {!isExpired && (
+                      <button
+                        type="button"
+                        onClick={() => setVoteBarExpanded(true)}
+                        className="ml-auto text-[11px] text-primary hover:underline flex-shrink-0"
+                      >
+                        변경
+                      </button>
+                    )}
+                  </div>
+
+                  {/* 댓글 입력 */}
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={commentText}
+                      onChange={(e) => setCommentText(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" && !e.nativeEvent.isComposing && commentText.trim()) {
+                          handleComment();
+                        }
+                      }}
+                      placeholder="의견을 남겨보세요..."
+                      className="flex-1 px-3 py-2 text-sm bg-muted/50 border border-border rounded-lg focus:outline-none focus:ring-1 focus:ring-primary"
+                    />
+                    <Button
+                      size="sm"
+                      disabled={!commentText.trim() || isPending}
+                      onClick={handleComment}
+                      className="px-4"
+                    >
+                      등록
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Confirm Dialog */}
