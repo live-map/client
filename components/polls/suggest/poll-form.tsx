@@ -21,6 +21,29 @@ import {
 } from "@/lib/validations/poll";
 import { useEffect } from "react";
 
+const EXAMPLES = [
+  {
+    title: "주 4일제 도입, 찬성하십니까?",
+    description: "근로시간 단축을 통한 삶의 질 향상과 생산성 변화에 대해 의견을 나눠봅시다.",
+  },
+  {
+    title: "대학 등록금 무상화, 실현 가능할까?",
+    description: "OECD 국가들의 등록금 정책을 비교하며 한국형 모델을 논의합니다.",
+  },
+  {
+    title: "SNS 실명제 부활, 어떻게 생각하시나요?",
+    description: "온라인 혐오 표현 근절과 표현의 자유 사이의 균형점을 찾아봅니다.",
+  },
+  {
+    title: "전기차 보조금 축소, 적절한 시기인가?",
+    description: "전기차 시장 성숙도와 환경 정책 목표를 고려한 보조금 정책을 논의합니다.",
+  },
+  {
+    title: "초등학교 스마트폰 사용 금지, 필요할까?",
+    description: "디지털 리터러시 교육과 아동 발달 보호 사이의 접점을 모색합니다.",
+  },
+];
+
 const TYPE_LABELS: Record<InteractionType, { label: string; icon: string }> = {
   SINGLE_CHOICE: { label: "단일선택", icon: "☝️" },
   BINARY: { label: "찬반", icon: "⚖️" },
@@ -83,6 +106,26 @@ export function PollForm() {
       <CardContent>
         <FormProvider {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            {/* 예시 선택 */}
+            <div className="space-y-2">
+              <Label>예시로 시작하기</Label>
+              <div className="flex flex-wrap gap-2">
+                {EXAMPLES.map((ex) => (
+                  <button
+                    key={ex.title}
+                    type="button"
+                    onClick={() => {
+                      form.setValue("title", ex.title);
+                      form.setValue("description", ex.description);
+                    }}
+                    className="rounded-full border border-border bg-muted/50 px-3 py-1.5 text-xs text-muted-foreground transition-colors hover:border-primary/50 hover:text-foreground"
+                  >
+                    {ex.title}
+                  </button>
+                ))}
+              </div>
+            </div>
+
             <div className="space-y-2">
               <Label htmlFor="title">제목</Label>
               <Input id="title" placeholder="무엇에 대해 물어볼까요?" {...form.register("title")} />
