@@ -592,15 +592,15 @@ export function FloatingVoteBar({ pollType, options, onVote, scaleConfig }: Floa
   // 다지선다 (multiple)
   if (pollType === "multiple") {
     return (
-      <div className="px-4 py-2">
-        <p className="text-[10px] text-muted-foreground mb-1.5">하나를 선택하세요</p>
-        <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-hide">
+      <div className="px-4 py-2.5">
+        <p className="text-xs text-muted-foreground mb-2">하나를 선택하세요</p>
+        <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
           {options.map((option) => (
             <button
               key={option.id}
               type="button"
               onClick={() => onVote(option.id)}
-              className="flex-shrink-0 py-2 px-3 rounded-lg border border-border text-xs text-foreground hover:border-primary hover:bg-primary/5 transition-all whitespace-nowrap"
+              className="flex-shrink-0 py-2.5 px-4 rounded-lg border border-border text-sm text-foreground hover:border-primary hover:bg-primary/5 transition-all whitespace-nowrap"
             >
               {option.label}
             </button>
@@ -613,32 +613,32 @@ export function FloatingVoteBar({ pollType, options, onVote, scaleConfig }: Floa
   // 복수선택 (checkbox)
   if (pollType === "checkbox") {
     return (
-      <div className="px-4 py-2">
-        <div className="flex items-center justify-between mb-1.5">
-          <p className="text-[10px] text-muted-foreground">복수선택 가능</p>
+      <div className="px-4 py-2.5">
+        <div className="flex items-center justify-between mb-2">
+          <p className="text-xs text-muted-foreground">복수선택 가능</p>
           {selectedOptions.length > 0 && (
             <button
               type="button"
               onClick={() => onVote(selectedOptions)}
-              className="text-xs font-semibold text-primary"
+              className="text-sm font-semibold text-primary"
             >
               완료 ({selectedOptions.length})
             </button>
           )}
         </div>
-        <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-hide">
+        <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
           {options.map((option) => (
             <button
               key={option.id}
               type="button"
               onClick={() => toggleOption(option.id)}
-              className={`flex-shrink-0 py-2 px-3 rounded-lg border text-xs transition-all whitespace-nowrap ${
+              className={`flex-shrink-0 py-2.5 px-4 rounded-lg border text-sm transition-all whitespace-nowrap ${
                 selectedOptions.includes(option.id)
                   ? "border-primary bg-primary/10 text-primary"
                   : "border-border text-foreground hover:border-primary/50"
               }`}
             >
-              {selectedOptions.includes(option.id) && <Check className="w-3 h-3 inline mr-1" />}
+              {selectedOptions.includes(option.id) && <Check className="w-3.5 h-3.5 inline mr-1" />}
               {option.label}
             </button>
           ))}
@@ -653,9 +653,9 @@ export function FloatingVoteBar({ pollType, options, onVote, scaleConfig }: Floa
     const max = scaleConfig?.max || 10;
 
     return (
-      <div className="px-4 py-2">
+      <div className="px-4 py-2.5">
         <div className="flex items-center gap-3">
-          <span className="text-[10px] text-muted-foreground w-12">
+          <span className="text-xs text-muted-foreground w-12">
             {scaleConfig?.labels?.min || "최소"}
           </span>
           <input
@@ -664,9 +664,9 @@ export function FloatingVoteBar({ pollType, options, onVote, scaleConfig }: Floa
             max={max}
             value={scaleValue}
             onChange={(e) => setScaleValue(Number(e.target.value))}
-            className="flex-1 h-2 bg-muted rounded-full appearance-none cursor-pointer accent-primary"
+            className="flex-1 h-3 bg-muted rounded-full appearance-none cursor-pointer accent-primary"
           />
-          <span className="text-[10px] text-muted-foreground w-12 text-right">
+          <span className="text-xs text-muted-foreground w-12 text-right">
             {scaleConfig?.labels?.max || "최대"}
           </span>
         </div>
@@ -675,7 +675,7 @@ export function FloatingVoteBar({ pollType, options, onVote, scaleConfig }: Floa
           <button
             type="button"
             onClick={() => onVote(scaleValue)}
-            className="py-2 px-4 rounded-lg bg-primary text-primary-foreground font-semibold text-xs hover:opacity-90"
+            className="py-3 px-6 rounded-lg bg-primary text-primary-foreground font-semibold text-sm hover:opacity-90"
           >
             투표하기
           </button>
@@ -687,25 +687,25 @@ export function FloatingVoteBar({ pollType, options, onVote, scaleConfig }: Floa
   // 순위 (ranking)
   if (pollType === "ranking") {
     return (
-      <div className="px-4 py-2">
-        <div className="flex items-center justify-between mb-1.5">
-          <p className="text-[10px] text-muted-foreground">순위를 조정하세요</p>
+      <div className="px-4 py-2.5">
+        <div className="flex items-center justify-between mb-2">
+          <p className="text-xs text-muted-foreground">순위를 조정하세요</p>
           <button
             type="button"
             onClick={() => onVote(rankingOptions)}
-            className="text-xs font-semibold text-primary"
+            className="text-sm font-semibold text-primary"
           >
             완료
           </button>
         </div>
-        <div className="flex gap-1 overflow-x-auto pb-1 scrollbar-hide">
+        <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
           {rankingOptions.map((optionId, index) => (
             <div
               key={optionId}
-              className="flex-shrink-0 flex items-center gap-1 bg-muted/50 rounded-lg px-2 py-1.5"
+              className="flex-shrink-0 flex items-center gap-1.5 bg-muted/50 rounded-lg px-3 py-2"
             >
-              <span className="text-[10px] font-bold text-primary">{index + 1}</span>
-              <span className="text-xs text-foreground whitespace-nowrap">
+              <span className="text-xs font-bold text-primary">{index + 1}</span>
+              <span className="text-sm text-foreground whitespace-nowrap">
                 {getOptionLabel(optionId)}
               </span>
               <div className="flex">
@@ -713,17 +713,17 @@ export function FloatingVoteBar({ pollType, options, onVote, scaleConfig }: Floa
                   type="button"
                   onClick={() => moveItem(index, "up")}
                   disabled={index === 0}
-                  className="p-0.5 text-muted-foreground hover:text-foreground disabled:opacity-30"
+                  className="p-1.5 text-muted-foreground hover:text-foreground disabled:opacity-30"
                 >
-                  <ChevronUp className="w-3 h-3" />
+                  <ChevronUp className="w-4 h-4" />
                 </button>
                 <button
                   type="button"
                   onClick={() => moveItem(index, "down")}
                   disabled={index === rankingOptions.length - 1}
-                  className="p-0.5 text-muted-foreground hover:text-foreground disabled:opacity-30"
+                  className="p-1.5 text-muted-foreground hover:text-foreground disabled:opacity-30"
                 >
-                  <ChevronDown className="w-3 h-3" />
+                  <ChevronDown className="w-4 h-4" />
                 </button>
               </div>
             </div>

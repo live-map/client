@@ -130,6 +130,7 @@ export const createPoll = async (body: {
   title: string;
   description?: string;
   interactionType?: string;
+  category?: string;
   options: { text: string; order?: number }[];
   sources?: { title: string; url: string; sourceType?: string; description?: string }[];
 }) => {

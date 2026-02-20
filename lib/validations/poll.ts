@@ -25,20 +25,53 @@ const pollSourceSchema = z.object({
 });
 
 /**
+ * 인터랙션 타입
+ */
+export const interactionTypes = [
+  "SINGLE_CHOICE",
+  "BINARY",
+  "MULTIPLE_CHOICE",
+  "SLIDER",
+  "RANKING",
+] as const;
+
+export type InteractionType = (typeof interactionTypes)[number];
+
+/**
+ * 카테고리 목록
+ */
+export const pollCategories = [
+  "정치",
+  "경제",
+  "사회",
+  "기술",
+  "환경",
+  "문화",
+  "스포츠",
+  "기타",
+] as const;
+
+/**
  * 여론조사 생성 스키마
  */
-export const createPollSchema = z.object({
-  title: z
-    .string()
-    .min(1, { error: "제목을 입력해주세요" })
-    .max(200, { error: "제목은 200자 이내로 입력해주세요" }),
-  description: z.string().max(2000, { error: "설명은 2000자 이내로 입력해주세요" }).optional(),
-  options: z
-    .array(pollOptionSchema)
-    .min(2, { error: "최소 2개의 선택지가 필요합니다" })
-    .max(10, { error: "선택지는 최대 10개까지 추가할 수 있습니다" }),
-  sources: z.array(pollSourceSchema).optional(),
-});
+export const createPollSchema = z
+  .object({
+    title: z
+      .string()
+      .min(1, { error: "제목을 입력해주세요" })
+      .max(200, { error: "제목은 200자 이내로 입력해주세요" }),
+    description: z.string().max(2000, { error: "설명은 2000자 이내로 입력해주세요" }).optional(),
+    interactionType: z.enum(["SINGLE_CHOICE", "BINARY", "MULTIPLE_CHOICE", "SLIDER", "RANKING"]),
+    category: z.string().optional(),
+    options: z
+      .array(pollOptionSchema)
+      .max(10, { error: "선택지는 최대 10개까지 추가할 수 있습니다" }),
+    sources: z.array(pollSourceSchema).optional(),
+  })
+  .refine((data) => data.interactionType === "SLIDER" || data.options.length >= 2, {
+    message: "최소 2개의 선택지가 필요합니다",
+    path: ["options"],
+  });
 
 export type CreatePollFormValues = z.infer<typeof createPollSchema>;
 

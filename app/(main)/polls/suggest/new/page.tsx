@@ -1,5 +1,3 @@
-import { redirect } from "next/navigation";
-import { auth } from "@/lib/auth";
 import { PollForm } from "@/components/polls/suggest/poll-form";
 
 export const metadata = {
@@ -7,15 +5,9 @@ export const metadata = {
   description: "새로운 여론조사를 제안해보세요",
 };
 
-export default async function NewPollPage() {
-  const session = await auth();
-
-  if (!session?.user) {
-    redirect("/auth/signin?callbackUrl=/polls/suggest/new");
-  }
-
+export default function NewPollPage() {
   return (
-    <div className="mx-auto max-w-lg">
+    <div className="mx-auto max-w-lg lg:max-w-xl">
       <PollForm />
     </div>
   );

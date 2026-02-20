@@ -131,3 +131,52 @@
     @apply bg-background text-foreground;
   }
 }
+
+@layer utilities {
+  .glass-card {
+    background: oklch(from var(--card) l c h / 0.8);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid oklch(from var(--border) l c h / 0.5);
+  }
+
+  .glass-sidebar {
+    background: oklch(from var(--sidebar) l c h / 0.8);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-right: 1px solid oklch(from var(--sidebar-border) l c h / 0.5);
+  }
+
+  .ambient-bg {
+    position: relative;
+  }
+
+  @media (min-width: 1024px) {
+    .ambient-bg::before,
+    .ambient-bg::after {
+      content: "";
+      position: fixed;
+      border-radius: 9999px;
+      filter: blur(120px);
+      opacity: 0.15;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .ambient-bg::before {
+      width: 400px;
+      height: 400px;
+      top: -100px;
+      left: -100px;
+      background: oklch(0.55 0.2 260);
+    }
+
+    .ambient-bg::after {
+      width: 350px;
+      height: 350px;
+      bottom: -80px;
+      right: -80px;
+      background: oklch(0.55 0.15 145);
+    }
+  }
+}

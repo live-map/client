@@ -118,11 +118,11 @@ export function PollsAllClient({ initialPolls }: PollsAllClientProps) {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-xl border-b border-border/50 shadow-sm">
-        <div className="max-w-lg mx-auto px-4 py-3 flex items-center gap-3">
+      <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-xl border-b border-border/50 shadow-sm lg:border-none lg:bg-transparent lg:backdrop-blur-none lg:relative">
+        <div className="max-w-lg lg:max-w-none mx-auto px-4 py-3 flex items-center gap-3">
           <Link
             href="/polls"
-            className="p-1.5 -ml-1.5 hover:bg-foreground/5 rounded-full transition-colors"
+            className="p-1.5 -ml-1.5 hover:bg-foreground/5 rounded-full transition-colors lg:hidden"
           >
             <ArrowLeft className="w-5 h-5 text-foreground" />
           </Link>
@@ -130,7 +130,7 @@ export function PollsAllClient({ initialPolls }: PollsAllClientProps) {
         </div>
       </header>
 
-      <main className="max-w-lg mx-auto px-4 py-4">
+      <main className="max-w-lg lg:max-w-none mx-auto px-4 lg:px-0 py-4">
         {/* Search Bar */}
         <div className="relative mb-4">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />

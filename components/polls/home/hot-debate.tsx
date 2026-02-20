@@ -261,7 +261,7 @@ export function HotDebate({ debate, onClick }: HotDebateProps) {
   };
 
   return (
-    <section className="px-4 py-4">
+    <section className="px-4 py-4 lg:px-0 lg:py-6">
       <button type="button" onClick={onClick} className="w-full text-left">
         {/* Header */}
         <div className="flex items-center gap-2 mb-1">
@@ -281,7 +281,9 @@ export function HotDebate({ debate, onClick }: HotDebateProps) {
         <div className="bg-card border border-border rounded-2xl overflow-hidden hover:shadow-lg hover:border-border/80 transition-all duration-200 hover:-translate-y-0.5">
           {/* Title */}
           <div className="p-4 pb-3">
-            <h3 className="font-bold text-foreground text-sm leading-snug">{debate.title}</h3>
+            <h3 className="font-bold text-foreground text-sm lg:text-base leading-snug">
+              {debate.title}
+            </h3>
           </div>
 
           {/* Vote Bar - 타입별 UI */}

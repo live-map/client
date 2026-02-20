@@ -38,7 +38,7 @@ export function UserPollSection({ polls, onCreateClick }: UserPollSectionProps) 
   );
 
   return (
-    <section className="px-4 py-5 border-t border-border">
+    <section className="px-4 py-5 lg:px-0 lg:py-6 border-t border-border">
       {/* Header */}
       <div className="flex items-center justify-between mb-3">
         <div>
@@ -103,7 +103,7 @@ export function UserPollSection({ polls, onCreateClick }: UserPollSectionProps) 
           <Link
             key={poll.id}
             href={`/polls/suggest/${poll.id}`}
-            className="block w-full bg-card border border-border rounded-xl p-3 hover:shadow-sm hover:border-border/80 transition-all duration-200 text-left"
+            className="block w-full bg-card border border-border rounded-xl p-3 lg:p-4 hover:shadow-sm hover:border-border/80 transition-all duration-200 text-left"
           >
             <div className="flex items-start gap-2">
               <span className="text-muted-foreground font-medium text-xs min-w-[16px]">
