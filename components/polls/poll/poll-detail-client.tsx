@@ -140,8 +140,8 @@ function MarkdownRenderer({ content }: { content: string }) {
           i++;
           tableRows.push(lines[i]);
         }
-        // 구분선(|---|---|) 제거
-        const dataRows = tableRows.filter((r) => !r.match(/^\|[\s\-:]+\|$/));
+        // 구분선(|---|---|---| 등) 제거
+        const dataRows = tableRows.filter((r) => !r.match(/^\|(\s*[-:]+[-\s:]*\|)+$/));
         if (dataRows.length > 0) {
           const headerCells = dataRows[0].split("|").filter((c) => c.trim() !== "");
           const bodyRows = dataRows.slice(1);
