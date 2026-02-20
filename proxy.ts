@@ -11,7 +11,7 @@ import { getToken } from "next-auth/jwt";
  */
 
 /** Routes that require authentication */
-const PROTECTED_PATTERNS = [/^\/profile/, /^\/polls\/suggest\/new/, /^\/polls\/[^/]+\/edit/];
+const PROTECTED_PATTERNS = [/^\/profile/, /^\/polls\/[^/]+\/edit/];
 
 function isProtectedRoute(pathname: string): boolean {
   return PROTECTED_PATTERNS.some((pattern) => pattern.test(pathname));

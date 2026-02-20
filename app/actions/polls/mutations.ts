@@ -114,14 +114,16 @@ export async function createPoll(dto: {
   title: string;
   description?: string;
   interactionType?: string;
+  category?: string;
   options: { text: string; order?: number }[];
   sources?: { title: string; url: string; sourceType?: string; description?: string }[];
-}): Promise<ActionResult> {
+}): Promise<ActionResult<{ id: string }>> {
   try {
-    const { error } = await apiCreatePoll({
+    const { data, error } = await apiCreatePoll({
       title: dto.title,
       description: dto.description,
       interactionType: dto.interactionType || "SINGLE_CHOICE",
+      category: dto.category,
       options: dto.options,
       sources: dto.sources,
     });
@@ -131,7 +133,8 @@ export async function createPoll(dto: {
     }
 
     updateTag("polls");
-    return {};
+    const poll = data as { id: string } | null;
+    return { data: poll ? { id: poll.id } : undefined };
   } catch {
     return { error: "여론조사 생성 중 오류가 발생했습니다." };
   }
@@ -178,40 +181,11 @@ export async function deletePoll(id: string): Promise<ActionResult> {
 }
 
 /**
- * 댓글 좋아요 토글
+ * 폴 캐시 무효화 (리서치 완료 시 호출)
  */
-export async function likePollComment(
-  pollId: string,
-  commentId: string
-): Promise<ActionResult<{ likes: number; liked: boolean }>> {
-  try {
-    const { data, error, status } = await apiLikePollComment(pollId, commentId);
-
-    if (error) {
-      return { error: getCommentErrorMessage(status, error), status };
-    }
-
-    return { data: data as { likes: number; liked: boolean } };
-  } catch {
-    return { error: "서버 연결에 실패했습니다" };
-  }
-}
-
-/**
- * 댓글 삭제
- */
-export async function deletePollComment(pollId: string, commentId: string): Promise<ActionResult> {
-  try {
-    const { error } = await apiDeletePollComment(pollId, commentId);
-
-    if (error) {
-      return { error };
-    }
-
-    return { data: null };
-  } catch {
-    return { error: "댓글 삭제 중 오류가 발생했습니다." };
-  }
+export async function revalidatePoll(pollId: string): Promise<void> {
+  updateTag(`poll-${pollId}`);
+  updateTag("polls");
 }
 
 /**
