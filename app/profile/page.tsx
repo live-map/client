@@ -14,12 +14,14 @@ export default async function ProfilePage() {
   const { id, name, email, image } = session.user;
 
   const [postsResult, commentsResult] = await Promise.all([
-    getPostList(1, 0, undefined, id),
-    getCommentList(undefined, id, 1),
+    getPostList(10, 0, undefined, id),
+    getCommentList(undefined, id, 10),
   ]);
 
   const postCount = postsResult.data?.total ?? 0;
   const commentCount = commentsResult.data?.total ?? 0;
+  const initialPosts = postsResult.data?.items ?? [];
+  const initialComments = commentsResult.data?.items ?? [];
 
   return (
     <ProfileClient
@@ -29,8 +31,11 @@ export default async function ProfilePage() {
         image: image ?? null,
         createdAt: new Date().toISOString(),
       }}
+      userId={id}
       postCount={postCount}
       commentCount={commentCount}
+      initialPosts={initialPosts}
+      initialComments={initialComments}
     />
   );
 }
