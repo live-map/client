@@ -133,6 +133,54 @@ function MarkdownRenderer({ content }: { content: string }) {
         }
       }
 
+      // 마크다운 테이블
+      if (line.startsWith("|") && line.endsWith("|")) {
+        const tableRows = [line];
+        while (i + 1 < lines.length && lines[i + 1].startsWith("|") && lines[i + 1].endsWith("|")) {
+          i++;
+          tableRows.push(lines[i]);
+        }
+        // 구분선(|---|---|) 제거
+        const dataRows = tableRows.filter((r) => !r.match(/^\|[\s\-:]+\|$/));
+        if (dataRows.length > 0) {
+          const headerCells = dataRows[0].split("|").filter((c) => c.trim() !== "");
+          const bodyRows = dataRows.slice(1);
+          elements.push(
+            <div
+              key={currentIndex++}
+              className="my-3 overflow-x-auto rounded-lg border border-border"
+            >
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-border bg-muted/50">
+                    {headerCells.map((cell, ci) => (
+                      <th key={ci} className="px-3 py-2 text-left font-medium text-foreground">
+                        {cell.trim()}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {bodyRows.map((row, ri) => {
+                    const cells = row.split("|").filter((c) => c.trim() !== "");
+                    return (
+                      <tr key={ri} className="border-b border-border last:border-0">
+                        {cells.map((cell, ci) => (
+                          <td key={ci} className="px-3 py-2 text-foreground/90">
+                            {cell.trim()}
+                          </td>
+                        ))}
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          );
+          continue;
+        }
+      }
+
       if (line.startsWith("> ")) {
         const quoteLines = [line.replace("> ", "")];
         while (i + 1 < lines.length && lines[i + 1].startsWith("> ")) {
