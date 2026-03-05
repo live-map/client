@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import {
   MessageSquare,
   ThumbsUp,
@@ -12,8 +12,6 @@ import {
   BarChart3,
   Heart,
   Calendar,
-  ChevronLeft,
-  ChevronRight,
 } from "lucide-react";
 
 import { getPostList } from "@/lib/api";
@@ -40,56 +38,72 @@ const timeWindowTabs: { key: SortType; label: string; icon: typeof Calendar }[] 
   { key: "monthly_hot", label: "월간", icon: Calendar },
 ];
 
-const POSTS_PER_PAGE = 20;
-
-function getPageNumbers(current: number, total: number): (number | "...")[] {
-  if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
-
-  const pages: (number | "...")[] = [1];
-  const start = Math.max(2, current - 1);
-  const end = Math.min(total - 1, current + 1);
-
-  if (start > 2) pages.push("...");
-  for (let i = start; i <= end; i++) pages.push(i);
-  if (end < total - 1) pages.push("...");
-  pages.push(total);
-
-  return pages;
-}
+const PAGE_SIZE = 20;
 
 export function CommunitySection({ initialPosts, initialTotal }: CommunitySectionProps) {
   const [sortType, setSortType] = useState<SortType>("popular");
   const [posts, setPosts] = useState<PostResponse[]>(initialPosts);
-  const [total, setTotal] = useState(initialTotal);
-  const [currentPage, setCurrentPage] = useState(1);
+  const [, setTotal] = useState(initialTotal);
   const [loading, setLoading] = useState(false);
-
-  const totalPages = Math.max(1, Math.ceil(total / POSTS_PER_PAGE));
+  const [hasMore, setHasMore] = useState(initialPosts.length < initialTotal);
+  const observerRef = useRef<IntersectionObserver | null>(null);
+  const loadMoreRef = useRef<HTMLDivElement | null>(null);
 
   const isTimeWindow = (["daily_hot", "weekly_hot", "monthly_hot"] as SortType[]).includes(
     sortType
   );
 
-  const fetchPosts = async (sort: SortType, page: number) => {
-    setLoading(true);
-    const offset = (page - 1) * POSTS_PER_PAGE;
-    const { data } = await getPostList(POSTS_PER_PAGE, offset, sort);
-    setPosts(data?.items ?? []);
-    setTotal(data?.total ?? 0);
-    setLoading(false);
-  };
+  const fetchPosts = useCallback(
+    async (sort: SortType, reset: boolean) => {
+      setLoading(true);
+      const currentOffset = reset ? 0 : posts.length;
+      const { data } = await getPostList(PAGE_SIZE, currentOffset, sort);
+      const newItems = data?.items ?? [];
+      const newTotal = data?.total ?? 0;
+
+      if (reset) {
+        setPosts(newItems);
+      } else {
+        setPosts((prev) => [...prev, ...newItems]);
+      }
+      setTotal(newTotal);
+      setHasMore(reset ? newItems.length < newTotal : currentOffset + newItems.length < newTotal);
+      setLoading(false);
+    },
+    [posts.length]
+  );
 
   const handleSortChange = async (newSort: SortType) => {
+    if (newSort === sortType) return;
     setSortType(newSort);
-    setCurrentPage(1);
-    await fetchPosts(newSort, 1);
+    setHasMore(true);
+    await fetchPosts(newSort, true);
   };
 
-  const handlePageChange = async (page: number) => {
-    if (page < 1 || page > totalPages || page === currentPage) return;
-    setCurrentPage(page);
-    await fetchPosts(sortType, page);
-  };
+  const loadMore = useCallback(() => {
+    if (loading || !hasMore) return;
+    fetchPosts(sortType, false);
+  }, [loading, hasMore, fetchPosts, sortType]);
+
+  // Intersection Observer for infinite scroll
+  useEffect(() => {
+    if (observerRef.current) observerRef.current.disconnect();
+
+    observerRef.current = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasMore && !loading) {
+          loadMore();
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    if (loadMoreRef.current) {
+      observerRef.current.observe(loadMoreRef.current);
+    }
+
+    return () => observerRef.current?.disconnect();
+  }, [hasMore, loading, loadMore]);
 
   return (
     <div className="px-4 py-4 lg:px-0">
@@ -163,8 +177,8 @@ export function CommunitySection({ initialPosts, initialTotal }: CommunitySectio
       )}
 
       {/* Post List */}
-      <div className={`space-y-2 transition-opacity ${loading ? "opacity-50" : "opacity-100"}`}>
-        {posts.length === 0 ? (
+      <div className="space-y-2">
+        {posts.length === 0 && !loading ? (
           <div className="py-12 text-center text-sm text-muted-foreground">게시글이 없습니다</div>
         ) : (
           posts.map((post) => (
@@ -209,53 +223,20 @@ export function CommunitySection({ initialPosts, initialTotal }: CommunitySectio
         )}
       </div>
 
-      {/* Pagination */}
-      {totalPages > 1 && (
-        <div className="flex items-center justify-center gap-1 mt-4">
-          <button
-            type="button"
-            onClick={() => handlePageChange(currentPage - 1)}
-            disabled={currentPage === 1 || loading}
-            className="p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors disabled:opacity-30 disabled:pointer-events-none"
-          >
-            <ChevronLeft className="w-4 h-4" />
-          </button>
-          {getPageNumbers(currentPage, totalPages).map((page, i) =>
-            page === "..." ? (
-              <span key={`dots-${i}`} className="px-1 text-xs text-muted-foreground">
-                ...
-              </span>
-            ) : (
-              <button
-                key={page}
-                type="button"
-                onClick={() => handlePageChange(page as number)}
-                disabled={loading}
-                className={`min-w-[28px] h-7 rounded-md text-xs font-medium transition-colors ${
-                  currentPage === page
-                    ? "bg-primary text-primary-foreground"
-                    : "text-muted-foreground hover:text-foreground hover:bg-muted"
-                }`}
-              >
-                {page}
-              </button>
-            )
-          )}
-          <button
-            type="button"
-            onClick={() => handlePageChange(currentPage + 1)}
-            disabled={currentPage === totalPages || loading}
-            className="p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors disabled:opacity-30 disabled:pointer-events-none"
-          >
-            <ChevronRight className="w-4 h-4" />
-          </button>
-        </div>
-      )}
+      {/* Load More Trigger */}
+      <div ref={loadMoreRef} className="py-6 flex justify-center">
+        {loading && (
+          <div className="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+        )}
+        {!hasMore && posts.length > 0 && (
+          <p className="text-xs text-muted-foreground">모든 게시글을 불러왔습니다</p>
+        )}
+      </div>
 
       {/* Write Button */}
       <Link
         href="/community/new"
-        className="flex items-center justify-center gap-1 w-full mt-4 py-2.5 bg-muted/50 hover:bg-muted text-sm text-muted-foreground hover:text-foreground rounded-xl transition-all"
+        className="flex items-center justify-center gap-1 w-full mt-2 py-2.5 bg-muted/50 hover:bg-muted text-sm text-muted-foreground hover:text-foreground rounded-xl transition-all"
       >
         <MessageSquare className="w-4 h-4" />
         글쓰기

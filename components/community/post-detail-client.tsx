@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Eye, ThumbsUp, Trash2 } from "lucide-react";
-import { useSession } from "next-auth/react";
+import { useAuth } from "@/lib/auth/auth-context";
 import { toast } from "sonner";
 
 import { likePost, unlikePost, deletePost } from "@/lib/api";
@@ -28,12 +28,12 @@ interface PostDetailClientProps {
 
 export function PostDetailClient({ post, initialComments }: PostDetailClientProps) {
   const router = useRouter();
-  const { data: session } = useSession();
+  const { user: authUser } = useAuth();
   const [isLiked, setIsLiked] = useState(post.is_liked ?? false);
   const [likeCount, setLikeCount] = useState(post.like_count ?? 0);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  const isOwner = session?.user?.id === post.user_id;
+  const isOwner = authUser?.id === post.user_id;
 
   const handleDelete = async () => {
     setIsDeleting(true);

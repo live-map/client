@@ -1,22 +1,19 @@
 /**
- * Auth 모듈 - NextAuth 설정 및 인증 유틸리티
+ * Auth 모듈 - 인증 유틸리티
  *
  * @example
- * // NextAuth 핸들러 및 함수
- * import { auth, signIn, signOut, handlers } from "@/lib/auth";
+ * // Client-side auth hook
+ * import { useAuth } from "@/lib/auth/auth-context";
  *
- * // 인증 래퍼 HOF
+ * // Server-side auth wrapper
  * import { withAuth } from "@/lib/auth";
- *
- * // 소유권 검증
- * import { verifyItemOwnership } from "@/lib/auth";
  */
 
-// NextAuth 설정 및 핸들러
-export { auth, handlers, signIn, signOut } from "./config";
+// Server-side session check
+export { auth } from "./session";
 
 // 인증 래퍼 HOF
 export { withAuth } from "./with-auth";
 
-// 소유권 검증
-export { type OwnershipResult } from "./ownership";
+// Client-side auth context
+export { useAuth, AuthProvider } from "./auth-context";

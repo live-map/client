@@ -1,13 +1,37 @@
 "use server";
 
-import { signIn as nextAuthSignIn } from "@/lib/auth";
+import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
+
+const API_BASE = process.env.API_URL || "http://localhost:8000";
+const FRONTEND_URL = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
 
 /**
- * OAuth 로그인 (Google, Kakao)
+ * OAuth 로그인 - 사용자를 OAuth 제공자 인증 페이지로 리다이렉트
  */
 export async function signInWithOAuth(
   provider: "google" | "kakao",
   callbackUrl = "/"
 ): Promise<void> {
-  await nextAuthSignIn(provider, { redirectTo: callbackUrl });
+  // callbackUrl을 임시 쿠키에 저장 (redirect_uri에 포함하면 Google Console 등록 URI와 불일치)
+  const cookieStore = await cookies();
+  cookieStore.set("auth-callback-url", callbackUrl, {
+    path: "/",
+    maxAge: 600,
+    httpOnly: true,
+    sameSite: "lax",
+  });
+
+  const redirectUri = `${FRONTEND_URL}/api/auth/callback/${provider}`;
+
+  const res = await fetch(
+    `${API_BASE}/api/v1/auth/oauth/${provider}/authorize?redirect_uri=${encodeURIComponent(redirectUri)}`
+  );
+
+  if (!res.ok) {
+    throw new Error("Failed to get authorization URL");
+  }
+
+  const data = await res.json();
+  redirect(data.url);
 }

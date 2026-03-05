@@ -5,6 +5,70 @@ export type ClientOptions = {
 };
 
 /**
+ * CastVoteBinary
+ *
+ * BINARY / SINGLE_CHOICE / EMOJI_REACTION 투표.
+ */
+export type CastVoteBinary = {
+  /**
+   * Interactiontype
+   */
+  interactionType: "BINARY" | "SINGLE_CHOICE" | "EMOJI_REACTION";
+  /**
+   * Optionid
+   */
+  optionId: string;
+};
+
+/**
+ * CastVoteMultiple
+ *
+ * MULTIPLE_CHOICE 투표.
+ */
+export type CastVoteMultiple = {
+  /**
+   * Interactiontype
+   */
+  interactionType: "MULTIPLE_CHOICE";
+  /**
+   * Selectedoptionids
+   */
+  selectedOptionIds: Array<string>;
+};
+
+/**
+ * CastVoteRanking
+ *
+ * RANKING 투표.
+ */
+export type CastVoteRanking = {
+  /**
+   * Interactiontype
+   */
+  interactionType: "RANKING";
+  /**
+   * Rankingdata
+   */
+  rankingData: Array<string>;
+};
+
+/**
+ * CastVoteSlider
+ *
+ * SLIDER 투표.
+ */
+export type CastVoteSlider = {
+  /**
+   * Interactiontype
+   */
+  interactionType: "SLIDER";
+  /**
+   * Slidervalue
+   */
+  sliderValue: number;
+};
+
+/**
  * CommentCreate
  *
  * 댓글 생성 요청 (독립된 /comments 엔드포인트용).
@@ -165,76 +229,6 @@ export type CommentUpdate = {
 };
 
 /**
- * FeedItem
- *
- * Feed item schema matching frontend interface.
- *
- * Categories:
- * - WAR: Active conflict events
- * - SECURITY: Security-related events
- *
- * SubCategories:
- * - ru-uk: Russia-Ukraine
- * - is-ir: Israel-Iran
- * - US, KOREA, CHINA, JAPAN, etc.
- */
-export type FeedItem = {
-  /**
-   * Id
-   */
-  id: number;
-  /**
-   * Title
-   */
-  title: string;
-  /**
-   * Content
-   */
-  content: string;
-  /**
-   * Original Link
-   */
-  original_link?: string | null;
-  /**
-   * Source Name
-   */
-  source_name: string;
-  /**
-   * Source Type
-   */
-  source_type: string;
-  /**
-   * Published At
-   */
-  published_at: string;
-  /**
-   * Author
-   */
-  author?: string | null;
-  /**
-   * Thumbnail
-   */
-  thumbnail?: string | null;
-  /**
-   * Category
-   */
-  category: "WAR" | "SECURITY";
-  /**
-   * Sub Category
-   */
-  sub_category: string;
-  location: LocationSchema;
-  /**
-   * Credibility Score
-   */
-  credibility_score?: number | null;
-  /**
-   * Verification Status
-   */
-  verification_status?: string | null;
-};
-
-/**
  * HTTPValidationError
  */
 export type HttpValidationError = {
@@ -245,43 +239,103 @@ export type HttpValidationError = {
 };
 
 /**
- * InvestigateRequest
+ * HotDebateComment
  *
- * Request to start an investigation.
+ * 핫 디베이트 댓글.
  */
-export type InvestigateRequest = {
+export type HotDebateComment = {
   /**
-   * Topic
-   *
-   * Topic to investigate
+   * Id
    */
-  topic: string;
+  id: string;
   /**
-   * Category
-   *
-   * Event category (war, protest, terrorism, etc.)
+   * Author
    */
-  category?: string;
+  author: string;
+  /**
+   * Content
+   */
+  content: string;
+  /**
+   * Side
+   */
+  side: string;
+  /**
+   * Likes
+   */
+  likes: number;
 };
 
 /**
- * InvestigateResponse
+ * HotDebateOption
  *
- * Response from investigation initiation.
+ * 핫 디베이트 옵션 (multiple/checkbox/ranking 타입용).
  */
-export type InvestigateResponse = {
+export type HotDebateOption = {
   /**
-   * Investigation Id
+   * Id
    */
-  investigation_id: string;
+  id: string;
   /**
-   * Status
+   * Label
    */
-  status: string;
+  label: string;
   /**
-   * Message
+   * Percent
    */
-  message: string;
+  percent: number;
+  /**
+   * Color
+   */
+  color: string;
+};
+
+/**
+ * HotDebateResponse
+ *
+ * 핫 디베이트 응답 — 다중 pollType 지원.
+ */
+export type HotDebateResponse = {
+  /**
+   * Id
+   */
+  id: string;
+  /**
+   * Title
+   */
+  title: string;
+  /**
+   * Polltype
+   */
+  pollType: string;
+  /**
+   * Prolabel
+   */
+  proLabel?: string | null;
+  /**
+   * Conlabel
+   */
+  conLabel?: string | null;
+  /**
+   * Propercent
+   */
+  proPercent?: number | null;
+  /**
+   * Conpercent
+   */
+  conPercent?: number | null;
+  /**
+   * Options
+   */
+  options?: Array<HotDebateOption> | null;
+  /**
+   * Totalvotes
+   */
+  totalVotes: number;
+  /**
+   * Comments
+   */
+  comments?: Array<HotDebateComment>;
 };
 
 /**
@@ -306,32 +360,6 @@ export type LikeResponse = {
    * Message
    */
   message: string;
-};
-
-/**
- * LocationSchema
- *
- * Geographic location of the event.
- */
-export type LocationSchema = {
-  /**
-   * Lat
-   *
-   * Latitude
-   */
-  lat?: number | null;
-  /**
-   * Lng
-   *
-   * Longitude
-   */
-  lng?: number | null;
-  /**
-   * Name
-   *
-   * Location name
-   */
-  name?: string | null;
 };
 
 /**
@@ -378,6 +406,356 @@ export type MediaConfigResponse = {
  * 미디어 타입.
  */
 export type MediaType = "IMAGE" | "VIDEO";
+
+/**
+ * OptionCreate
+ *
+ * 선택지 생성 요청.
+ */
+export type OptionCreate = {
+  /**
+   * Text
+   */
+  text: string;
+  /**
+   * Order
+   */
+  order?: number | null;
+};
+
+/**
+ * OptionResponse
+ *
+ * 선택지 응답.
+ */
+export type OptionResponse = {
+  /**
+   * Id
+   */
+  id: string;
+  /**
+   * Text
+   */
+  text: string;
+  /**
+   * Votecount
+   */
+  voteCount?: number;
+};
+
+/**
+ * PollCardResponse
+ *
+ * 여론조사 카드 응답 (목록용).
+ */
+export type PollCardResponse = {
+  /**
+   * Id
+   */
+  id: string;
+  /**
+   * Title
+   */
+  title: string;
+  /**
+   * Description
+   */
+  description?: string | null;
+  /**
+   * Imageurl
+   */
+  imageUrl?: string | null;
+  /**
+   * Category
+   */
+  category?: string | null;
+  /**
+   * Type
+   */
+  type: string;
+  /**
+   * Status
+   */
+  status: string;
+  /**
+   * Interactiontype
+   */
+  interactionType: string;
+  /**
+   * Totalvotes
+   */
+  totalVotes?: number;
+  /**
+   * Viewcount
+   */
+  viewCount?: number;
+  /**
+   * Createdat
+   */
+  createdAt: string;
+  /**
+   * Endsat
+   */
+  endsAt?: string | null;
+  /**
+   * Options
+   */
+  options?: Array<OptionResponse>;
+  user?: UserBrief | null;
+};
+
+/**
+ * PollCommentCreate
+ *
+ * 여론조사 댓글 생성 요청.
+ */
+export type PollCommentCreate = {
+  /**
+   * Content
+   */
+  content: string;
+  /**
+   * Parentid
+   */
+  parentId?: string | null;
+  /**
+   * Optionid
+   */
+  optionId?: string | null;
+};
+
+/**
+ * PollCommentResponse
+ *
+ * 여론조사 댓글 응답.
+ */
+export type PollCommentResponse = {
+  /**
+   * Id
+   */
+  id: string;
+  /**
+   * Pollid
+   */
+  pollId: string;
+  /**
+   * Userid
+   */
+  userId: string;
+  /**
+   * Username
+   */
+  userName?: string | null;
+  /**
+   * Userimage
+   */
+  userImage?: string | null;
+  /**
+   * Content
+   */
+  content: string;
+  /**
+   * Optionid
+   */
+  optionId?: string | null;
+  /**
+   * Likes
+   */
+  likes?: number;
+  /**
+   * Depth
+   */
+  depth?: number;
+  /**
+   * Createdat
+   */
+  createdAt: string;
+  /**
+   * Isdeleted
+   */
+  isDeleted?: boolean;
+  /**
+   * Replies
+   */
+  replies?: Array<PollCommentResponse>;
+};
+
+/**
+ * PollCreate
+ *
+ * 여론조사 생성 요청.
+ */
+export type PollCreate = {
+  /**
+   * Title
+   */
+  title: string;
+  /**
+   * Description
+   */
+  description?: string | null;
+  /**
+   * Imageurl
+   */
+  imageUrl?: string | null;
+  /**
+   * Category
+   */
+  category?: string | null;
+  /**
+   * Interactiontype
+   */
+  interactionType?: string;
+  /**
+   * Startsat
+   */
+  startsAt?: string | null;
+  /**
+   * Endsat
+   */
+  endsAt?: string | null;
+  /**
+   * Options
+   */
+  options: Array<OptionCreate>;
+  /**
+   * Sources
+   */
+  sources?: Array<SourceCreate> | null;
+};
+
+/**
+ * PollDetailResponse
+ *
+ * 여론조사 상세 응답.
+ */
+export type PollDetailResponse = {
+  /**
+   * Id
+   */
+  id: string;
+  /**
+   * Title
+   */
+  title: string;
+  /**
+   * Description
+   */
+  description?: string | null;
+  /**
+   * Imageurl
+   */
+  imageUrl?: string | null;
+  /**
+   * Category
+   */
+  category?: string | null;
+  /**
+   * Type
+   */
+  type: string;
+  /**
+   * Status
+   */
+  status: string;
+  /**
+   * Interactiontype
+   */
+  interactionType: string;
+  /**
+   * Totalvotes
+   */
+  totalVotes?: number;
+  /**
+   * Viewcount
+   */
+  viewCount?: number;
+  /**
+   * Createdat
+   */
+  createdAt: string;
+  /**
+   * Endsat
+   */
+  endsAt?: string | null;
+  /**
+   * Options
+   */
+  options?: Array<OptionResponse>;
+  user?: UserBrief | null;
+  /**
+   * Startsat
+   */
+  startsAt?: string | null;
+  /**
+   * Userid
+   */
+  userId: string;
+  /**
+   * Updatedat
+   */
+  updatedAt: string;
+  /**
+   * Sources
+   */
+  sources?: Array<SourceResponse>;
+  /**
+   * Comments
+   */
+  comments?: Array<PollCommentResponse>;
+  /**
+   * Aicontent
+   */
+  aiContent?: string | null;
+  /**
+   * Aiupdatedat
+   */
+  aiUpdatedAt?: string | null;
+};
+
+/**
+ * PollListResponse
+ *
+ * 여론조사 목록 응답.
+ */
+export type PollListResponse = {
+  /**
+   * Items
+   */
+  items: Array<PollCardResponse>;
+  /**
+   * Total
+   */
+  total: number;
+  /**
+   * Limit
+   */
+  limit: number;
+  /**
+   * Offset
+   */
+  offset: number;
+};
+
+/**
+ * PollUpdate
+ *
+ * 여론조사 수정 요청.
+ */
+export type PollUpdate = {
+  /**
+   * Title
+   */
+  title?: string | null;
+  /**
+   * Description
+   */
+  description?: string | null;
+  /**
+   * Status
+   */
+  status?: string | null;
+};
 
 /**
  * PostCreate
@@ -706,41 +1084,41 @@ export type PresignedUrlResponse = {
 };
 
 /**
- * ScanRequest
+ * ResearchStatusResponse
  *
- * Request to trigger a scan.
+ * 리서치 상태 응답.
  */
-export type ScanRequest = {
+export type ResearchStatusResponse = {
   /**
-   * Sources
+   * Status
    *
-   * Sources to scan (gdelt, twitter, telegram)
+   * pending | running | completed | failed
    */
-  sources?: Array<string>;
+  status: string;
   /**
-   * Keywords
-   *
-   * Keywords to filter events
+   * Pollid
    */
-  keywords?: Array<string>;
+  pollId: string;
+  /**
+   * Error
+   */
+  error?: string | null;
 };
 
 /**
- * ScanResponse
+ * ResearchTriggerResponse
  *
- * Response from scan.
+ * 리서치 트리거 응답.
  */
-export type ScanResponse = {
+export type ResearchTriggerResponse = {
   /**
-   * Events Found
+   * Status
    */
-  events_found: number;
+  status: string;
   /**
-   * Events
+   * Pollid
    */
-  events: Array<{
-    [key: string]: unknown;
-  }>;
+  pollId: string;
 };
 
 /**
@@ -756,6 +1134,110 @@ export type SortType =
   | "daily_hot"
   | "weekly_hot"
   | "monthly_hot";
+
+/**
+ * SourceCreate
+ *
+ * 출처 생성 요청.
+ */
+export type SourceCreate = {
+  /**
+   * Title
+   */
+  title: string;
+  /**
+   * Url
+   */
+  url: string;
+  /**
+   * Sourcetype
+   */
+  sourceType?: string;
+  /**
+   * Description
+   */
+  description?: string | null;
+};
+
+/**
+ * SourceResponse
+ *
+ * 출처 응답.
+ */
+export type SourceResponse = {
+  /**
+   * Id
+   */
+  id: string;
+  /**
+   * Title
+   */
+  title: string;
+  /**
+   * Url
+   */
+  url: string;
+  /**
+   * Sourcetype
+   */
+  sourceType: string;
+  /**
+   * Description
+   */
+  description?: string | null;
+  /**
+   * Createdat
+   */
+  createdAt: string;
+};
+
+/**
+ * UserBrief
+ *
+ * 유저 간략 정보.
+ */
+export type UserBrief = {
+  /**
+   * Id
+   */
+  id?: string | null;
+  /**
+   * Name
+   */
+  name?: string | null;
+  /**
+   * Image
+   */
+  image?: string | null;
+};
+
+/**
+ * UserVoteResponse
+ *
+ * 사용자 투표 현황 응답.
+ */
+export type UserVoteResponse = {
+  /**
+   * Id
+   */
+  id: string;
+  /**
+   * Optionid
+   */
+  optionId?: string | null;
+  /**
+   * Slidervalue
+   */
+  sliderValue?: number | null;
+  /**
+   * Selectedoptionids
+   */
+  selectedOptionIds?: Array<unknown> | null;
+  /**
+   * Rankingdata
+   */
+  rankingData?: Array<unknown> | null;
+};
 
 /**
  * ValidationError
@@ -775,206 +1257,26 @@ export type ValidationError = {
   type: string;
 };
 
-export type GetFeedsApiV1FeedsGetData = {
-  body?: never;
-  path?: never;
-  query: {
-    /**
-     * Category
-     *
-     * Category filter: WAR or SECURITY
-     */
-    category: string;
-    /**
-     * Subcategory
-     *
-     * Sub-category filter: ru-uk, is-ir, KOREA, etc.
-     */
-    subCategory?: string | null;
-    /**
-     * Limit
-     *
-     * Number of items to return
-     */
-    limit?: number;
-    /**
-     * Offset
-     *
-     * Number of items to skip
-     */
-    offset?: number;
+/**
+ * VoteResponse
+ *
+ * 투표 응답.
+ */
+export type VoteResponse = {
+  /**
+   * Success
+   */
+  success: boolean;
+  /**
+   * Pollid
+   */
+  pollId: string;
+  /**
+   * Votedata
+   */
+  voteData: {
+    [key: string]: unknown;
   };
-  url: "/api/v1/feeds";
-};
-
-export type GetFeedsApiV1FeedsGetErrors = {
-  /**
-   * Validation Error
-   */
-  422: HttpValidationError;
-};
-
-export type GetFeedsApiV1FeedsGetError =
-  GetFeedsApiV1FeedsGetErrors[keyof GetFeedsApiV1FeedsGetErrors];
-
-export type GetFeedsApiV1FeedsGetResponses = {
-  /**
-   * Response Get Feeds Api V1 Feeds Get
-   *
-   * Successful Response
-   */
-  200: Array<FeedItem>;
-};
-
-export type GetFeedsApiV1FeedsGetResponse =
-  GetFeedsApiV1FeedsGetResponses[keyof GetFeedsApiV1FeedsGetResponses];
-
-export type GetFeedApiV1FeedsFeedIdGetData = {
-  body?: never;
-  path: {
-    /**
-     * Feed Id
-     */
-    feed_id: number;
-  };
-  query?: never;
-  url: "/api/v1/feeds/{feed_id}";
-};
-
-export type GetFeedApiV1FeedsFeedIdGetErrors = {
-  /**
-   * Validation Error
-   */
-  422: HttpValidationError;
-};
-
-export type GetFeedApiV1FeedsFeedIdGetError =
-  GetFeedApiV1FeedsFeedIdGetErrors[keyof GetFeedApiV1FeedsFeedIdGetErrors];
-
-export type GetFeedApiV1FeedsFeedIdGetResponses = {
-  /**
-   * Successful Response
-   */
-  200: FeedItem;
-};
-
-export type GetFeedApiV1FeedsFeedIdGetResponse =
-  GetFeedApiV1FeedsFeedIdGetResponses[keyof GetFeedApiV1FeedsFeedIdGetResponses];
-
-export type StartInvestigationApiV1AgentInvestigatePostData = {
-  body: InvestigateRequest;
-  path?: never;
-  query?: never;
-  url: "/api/v1/agent/investigate";
-};
-
-export type StartInvestigationApiV1AgentInvestigatePostErrors = {
-  /**
-   * Validation Error
-   */
-  422: HttpValidationError;
-};
-
-export type StartInvestigationApiV1AgentInvestigatePostError =
-  StartInvestigationApiV1AgentInvestigatePostErrors[keyof StartInvestigationApiV1AgentInvestigatePostErrors];
-
-export type StartInvestigationApiV1AgentInvestigatePostResponses = {
-  /**
-   * Successful Response
-   */
-  200: InvestigateResponse;
-};
-
-export type StartInvestigationApiV1AgentInvestigatePostResponse =
-  StartInvestigationApiV1AgentInvestigatePostResponses[keyof StartInvestigationApiV1AgentInvestigatePostResponses];
-
-export type GetInvestigationStatusApiV1AgentStatusInvestigationIdGetData = {
-  body?: never;
-  path: {
-    /**
-     * Investigation Id
-     */
-    investigation_id: string;
-  };
-  query?: never;
-  url: "/api/v1/agent/status/{investigation_id}";
-};
-
-export type GetInvestigationStatusApiV1AgentStatusInvestigationIdGetErrors = {
-  /**
-   * Validation Error
-   */
-  422: HttpValidationError;
-};
-
-export type GetInvestigationStatusApiV1AgentStatusInvestigationIdGetError =
-  GetInvestigationStatusApiV1AgentStatusInvestigationIdGetErrors[keyof GetInvestigationStatusApiV1AgentStatusInvestigationIdGetErrors];
-
-export type GetInvestigationStatusApiV1AgentStatusInvestigationIdGetResponses = {
-  /**
-   * Successful Response
-   */
-  200: unknown;
-};
-
-export type TriggerScanApiV1AgentScanPostData = {
-  body: ScanRequest;
-  path?: never;
-  query?: never;
-  url: "/api/v1/agent/scan";
-};
-
-export type TriggerScanApiV1AgentScanPostErrors = {
-  /**
-   * Validation Error
-   */
-  422: HttpValidationError;
-};
-
-export type TriggerScanApiV1AgentScanPostError =
-  TriggerScanApiV1AgentScanPostErrors[keyof TriggerScanApiV1AgentScanPostErrors];
-
-export type TriggerScanApiV1AgentScanPostResponses = {
-  /**
-   * Successful Response
-   */
-  200: ScanResponse;
-};
-
-export type TriggerScanApiV1AgentScanPostResponse =
-  TriggerScanApiV1AgentScanPostResponses[keyof TriggerScanApiV1AgentScanPostResponses];
-
-export type ListInvestigationsApiV1AgentInvestigationsGetData = {
-  body?: never;
-  path?: never;
-  query?: {
-    /**
-     * Status
-     */
-    status?: string | null;
-    /**
-     * Limit
-     */
-    limit?: number;
-  };
-  url: "/api/v1/agent/investigations";
-};
-
-export type ListInvestigationsApiV1AgentInvestigationsGetErrors = {
-  /**
-   * Validation Error
-   */
-  422: HttpValidationError;
-};
-
-export type ListInvestigationsApiV1AgentInvestigationsGetError =
-  ListInvestigationsApiV1AgentInvestigationsGetErrors[keyof ListInvestigationsApiV1AgentInvestigationsGetErrors];
-
-export type ListInvestigationsApiV1AgentInvestigationsGetResponses = {
-  /**
-   * Successful Response
-   */
-  200: unknown;
 };
 
 export type ListPostsApiV1PostsGetData = {
@@ -1658,6 +1960,459 @@ export type GeneratePresignedUrlApiV1MediaPresignedUrlPostResponses = {
 
 export type GeneratePresignedUrlApiV1MediaPresignedUrlPostResponse =
   GeneratePresignedUrlApiV1MediaPresignedUrlPostResponses[keyof GeneratePresignedUrlApiV1MediaPresignedUrlPostResponses];
+
+export type ListPollsApiV1PollsGetData = {
+  body?: never;
+  path?: never;
+  query?: {
+    /**
+     * Limit
+     */
+    limit?: number;
+    /**
+     * Offset
+     */
+    offset?: number;
+    /**
+     * Sort
+     *
+     * popular, recent, ending_soon, closed
+     */
+    sort?: string;
+    /**
+     * Search
+     */
+    search?: string | null;
+  };
+  url: "/api/v1/polls";
+};
+
+export type ListPollsApiV1PollsGetErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type ListPollsApiV1PollsGetError =
+  ListPollsApiV1PollsGetErrors[keyof ListPollsApiV1PollsGetErrors];
+
+export type ListPollsApiV1PollsGetResponses = {
+  /**
+   * Successful Response
+   */
+  200: PollListResponse;
+};
+
+export type ListPollsApiV1PollsGetResponse =
+  ListPollsApiV1PollsGetResponses[keyof ListPollsApiV1PollsGetResponses];
+
+export type CreatePollApiV1PollsPostData = {
+  body: PollCreate;
+  path?: never;
+  query?: never;
+  url: "/api/v1/polls";
+};
+
+export type CreatePollApiV1PollsPostErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type CreatePollApiV1PollsPostError =
+  CreatePollApiV1PollsPostErrors[keyof CreatePollApiV1PollsPostErrors];
+
+export type CreatePollApiV1PollsPostResponses = {
+  /**
+   * Successful Response
+   */
+  201: PollDetailResponse;
+};
+
+export type CreatePollApiV1PollsPostResponse =
+  CreatePollApiV1PollsPostResponses[keyof CreatePollApiV1PollsPostResponses];
+
+export type GetHotDebateApiV1PollsHotDebateGetData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: "/api/v1/polls/hot-debate";
+};
+
+export type GetHotDebateApiV1PollsHotDebateGetResponses = {
+  /**
+   * Response Get Hot Debate Api V1 Polls Hot Debate Get
+   *
+   * Successful Response
+   */
+  200: HotDebateResponse | null;
+};
+
+export type GetHotDebateApiV1PollsHotDebateGetResponse =
+  GetHotDebateApiV1PollsHotDebateGetResponses[keyof GetHotDebateApiV1PollsHotDebateGetResponses];
+
+export type GetSuggestedPollsApiV1PollsSuggestedGetData = {
+  body?: never;
+  path?: never;
+  query?: {
+    /**
+     * Limit
+     */
+    limit?: number;
+  };
+  url: "/api/v1/polls/suggested";
+};
+
+export type GetSuggestedPollsApiV1PollsSuggestedGetErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type GetSuggestedPollsApiV1PollsSuggestedGetError =
+  GetSuggestedPollsApiV1PollsSuggestedGetErrors[keyof GetSuggestedPollsApiV1PollsSuggestedGetErrors];
+
+export type GetSuggestedPollsApiV1PollsSuggestedGetResponses = {
+  /**
+   * Response Get Suggested Polls Api V1 Polls Suggested Get
+   *
+   * Successful Response
+   */
+  200: Array<PollCardResponse>;
+};
+
+export type GetSuggestedPollsApiV1PollsSuggestedGetResponse =
+  GetSuggestedPollsApiV1PollsSuggestedGetResponses[keyof GetSuggestedPollsApiV1PollsSuggestedGetResponses];
+
+export type DeletePollApiV1PollsPollIdDeleteData = {
+  body?: never;
+  path: {
+    /**
+     * Poll Id
+     */
+    poll_id: string;
+  };
+  query?: never;
+  url: "/api/v1/polls/{poll_id}";
+};
+
+export type DeletePollApiV1PollsPollIdDeleteErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type DeletePollApiV1PollsPollIdDeleteError =
+  DeletePollApiV1PollsPollIdDeleteErrors[keyof DeletePollApiV1PollsPollIdDeleteErrors];
+
+export type DeletePollApiV1PollsPollIdDeleteResponses = {
+  /**
+   * Successful Response
+   */
+  204: void;
+};
+
+export type DeletePollApiV1PollsPollIdDeleteResponse =
+  DeletePollApiV1PollsPollIdDeleteResponses[keyof DeletePollApiV1PollsPollIdDeleteResponses];
+
+export type GetPollApiV1PollsPollIdGetData = {
+  body?: never;
+  path: {
+    /**
+     * Poll Id
+     */
+    poll_id: string;
+  };
+  query?: never;
+  url: "/api/v1/polls/{poll_id}";
+};
+
+export type GetPollApiV1PollsPollIdGetErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type GetPollApiV1PollsPollIdGetError =
+  GetPollApiV1PollsPollIdGetErrors[keyof GetPollApiV1PollsPollIdGetErrors];
+
+export type GetPollApiV1PollsPollIdGetResponses = {
+  /**
+   * Successful Response
+   */
+  200: PollDetailResponse;
+};
+
+export type GetPollApiV1PollsPollIdGetResponse =
+  GetPollApiV1PollsPollIdGetResponses[keyof GetPollApiV1PollsPollIdGetResponses];
+
+export type UpdatePollApiV1PollsPollIdPatchData = {
+  body: PollUpdate;
+  path: {
+    /**
+     * Poll Id
+     */
+    poll_id: string;
+  };
+  query?: never;
+  url: "/api/v1/polls/{poll_id}";
+};
+
+export type UpdatePollApiV1PollsPollIdPatchErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type UpdatePollApiV1PollsPollIdPatchError =
+  UpdatePollApiV1PollsPollIdPatchErrors[keyof UpdatePollApiV1PollsPollIdPatchErrors];
+
+export type UpdatePollApiV1PollsPollIdPatchResponses = {
+  /**
+   * Successful Response
+   */
+  200: PollCardResponse;
+};
+
+export type UpdatePollApiV1PollsPollIdPatchResponse =
+  UpdatePollApiV1PollsPollIdPatchResponses[keyof UpdatePollApiV1PollsPollIdPatchResponses];
+
+export type GetUserVoteApiV1PollsPollIdVoteGetData = {
+  body?: never;
+  path: {
+    /**
+     * Poll Id
+     */
+    poll_id: string;
+  };
+  query?: never;
+  url: "/api/v1/polls/{poll_id}/vote";
+};
+
+export type GetUserVoteApiV1PollsPollIdVoteGetErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type GetUserVoteApiV1PollsPollIdVoteGetError =
+  GetUserVoteApiV1PollsPollIdVoteGetErrors[keyof GetUserVoteApiV1PollsPollIdVoteGetErrors];
+
+export type GetUserVoteApiV1PollsPollIdVoteGetResponses = {
+  /**
+   * Response Get User Vote Api V1 Polls  Poll Id  Vote Get
+   *
+   * Successful Response
+   */
+  200: UserVoteResponse | null;
+};
+
+export type GetUserVoteApiV1PollsPollIdVoteGetResponse =
+  GetUserVoteApiV1PollsPollIdVoteGetResponses[keyof GetUserVoteApiV1PollsPollIdVoteGetResponses];
+
+export type CastVoteApiV1PollsPollIdVotePostData = {
+  /**
+   * Data
+   */
+  body: CastVoteBinary | CastVoteSlider | CastVoteMultiple | CastVoteRanking;
+  path: {
+    /**
+     * Poll Id
+     */
+    poll_id: string;
+  };
+  query?: never;
+  url: "/api/v1/polls/{poll_id}/vote";
+};
+
+export type CastVoteApiV1PollsPollIdVotePostErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type CastVoteApiV1PollsPollIdVotePostError =
+  CastVoteApiV1PollsPollIdVotePostErrors[keyof CastVoteApiV1PollsPollIdVotePostErrors];
+
+export type CastVoteApiV1PollsPollIdVotePostResponses = {
+  /**
+   * Successful Response
+   */
+  200: VoteResponse;
+};
+
+export type CastVoteApiV1PollsPollIdVotePostResponse =
+  CastVoteApiV1PollsPollIdVotePostResponses[keyof CastVoteApiV1PollsPollIdVotePostResponses];
+
+export type ListCommentsApiV1PollsPollIdCommentsGetData = {
+  body?: never;
+  path: {
+    /**
+     * Poll Id
+     */
+    poll_id: string;
+  };
+  query?: never;
+  url: "/api/v1/polls/{poll_id}/comments";
+};
+
+export type ListCommentsApiV1PollsPollIdCommentsGetErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type ListCommentsApiV1PollsPollIdCommentsGetError =
+  ListCommentsApiV1PollsPollIdCommentsGetErrors[keyof ListCommentsApiV1PollsPollIdCommentsGetErrors];
+
+export type ListCommentsApiV1PollsPollIdCommentsGetResponses = {
+  /**
+   * Response List Comments Api V1 Polls  Poll Id  Comments Get
+   *
+   * Successful Response
+   */
+  200: Array<PollCommentResponse>;
+};
+
+export type ListCommentsApiV1PollsPollIdCommentsGetResponse =
+  ListCommentsApiV1PollsPollIdCommentsGetResponses[keyof ListCommentsApiV1PollsPollIdCommentsGetResponses];
+
+export type CreateCommentApiV1PollsPollIdCommentsPostData = {
+  body: PollCommentCreate;
+  path: {
+    /**
+     * Poll Id
+     */
+    poll_id: string;
+  };
+  query?: never;
+  url: "/api/v1/polls/{poll_id}/comments";
+};
+
+export type CreateCommentApiV1PollsPollIdCommentsPostErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type CreateCommentApiV1PollsPollIdCommentsPostError =
+  CreateCommentApiV1PollsPollIdCommentsPostErrors[keyof CreateCommentApiV1PollsPollIdCommentsPostErrors];
+
+export type CreateCommentApiV1PollsPollIdCommentsPostResponses = {
+  /**
+   * Successful Response
+   */
+  201: PollCommentResponse;
+};
+
+export type CreateCommentApiV1PollsPollIdCommentsPostResponse =
+  CreateCommentApiV1PollsPollIdCommentsPostResponses[keyof CreateCommentApiV1PollsPollIdCommentsPostResponses];
+
+export type TriggerResearchApiV1PollsPollIdResearchPostData = {
+  body?: never;
+  path: {
+    /**
+     * Poll Id
+     */
+    poll_id: string;
+  };
+  query?: never;
+  url: "/api/v1/polls/{poll_id}/research";
+};
+
+export type TriggerResearchApiV1PollsPollIdResearchPostErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type TriggerResearchApiV1PollsPollIdResearchPostError =
+  TriggerResearchApiV1PollsPollIdResearchPostErrors[keyof TriggerResearchApiV1PollsPollIdResearchPostErrors];
+
+export type TriggerResearchApiV1PollsPollIdResearchPostResponses = {
+  /**
+   * Successful Response
+   */
+  202: ResearchTriggerResponse;
+};
+
+export type TriggerResearchApiV1PollsPollIdResearchPostResponse =
+  TriggerResearchApiV1PollsPollIdResearchPostResponses[keyof TriggerResearchApiV1PollsPollIdResearchPostResponses];
+
+export type GetResearchStatusApiV1PollsPollIdResearchStatusGetData = {
+  body?: never;
+  path: {
+    /**
+     * Poll Id
+     */
+    poll_id: string;
+  };
+  query?: never;
+  url: "/api/v1/polls/{poll_id}/research/status";
+};
+
+export type GetResearchStatusApiV1PollsPollIdResearchStatusGetErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type GetResearchStatusApiV1PollsPollIdResearchStatusGetError =
+  GetResearchStatusApiV1PollsPollIdResearchStatusGetErrors[keyof GetResearchStatusApiV1PollsPollIdResearchStatusGetErrors];
+
+export type GetResearchStatusApiV1PollsPollIdResearchStatusGetResponses = {
+  /**
+   * Successful Response
+   */
+  200: ResearchStatusResponse;
+};
+
+export type GetResearchStatusApiV1PollsPollIdResearchStatusGetResponse =
+  GetResearchStatusApiV1PollsPollIdResearchStatusGetResponses[keyof GetResearchStatusApiV1PollsPollIdResearchStatusGetResponses];
+
+export type IncrementViewCountApiV1PollsPollIdViewPostData = {
+  body?: never;
+  path: {
+    /**
+     * Poll Id
+     */
+    poll_id: string;
+  };
+  query?: never;
+  url: "/api/v1/polls/{poll_id}/view";
+};
+
+export type IncrementViewCountApiV1PollsPollIdViewPostErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type IncrementViewCountApiV1PollsPollIdViewPostError =
+  IncrementViewCountApiV1PollsPollIdViewPostErrors[keyof IncrementViewCountApiV1PollsPollIdViewPostErrors];
+
+export type IncrementViewCountApiV1PollsPollIdViewPostResponses = {
+  /**
+   * Successful Response
+   */
+  204: void;
+};
+
+export type IncrementViewCountApiV1PollsPollIdViewPostResponse =
+  IncrementViewCountApiV1PollsPollIdViewPostResponses[keyof IncrementViewCountApiV1PollsPollIdViewPostResponses];
 
 export type HealthCheckHealthGetData = {
   body?: never;
