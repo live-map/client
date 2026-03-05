@@ -1,8 +1,6 @@
-import { cookies } from "next/headers";
+import { buildAuthHeaders, handleTokenRefreshResponse } from "@/lib/auth/tokens";
 
 const API_BASE = process.env.API_URL || "http://localhost:8000";
-const ACCESS_COOKIE =
-  process.env.NODE_ENV === "production" ? "__Secure-grapoll-access-token" : "grapoll-access-token";
 
 interface ServerSession {
   user: {
@@ -16,24 +14,26 @@ interface ServerSession {
 
 /**
  * Server-side session check.
- * Reads the access token from cookies and validates it against the backend.
- * Use in Server Components and Server Actions.
+ * Reads both tokens from cookies and validates against the backend.
+ * The backend middleware auto-refreshes expired access tokens.
  *
  * @returns Session object or null if not authenticated
  */
 export async function auth(): Promise<ServerSession | null> {
-  const cookieStore = await cookies();
-  const accessToken = cookieStore.get(ACCESS_COOKIE)?.value;
+  const headers = await buildAuthHeaders();
 
-  if (!accessToken) {
+  if (!headers["Authorization"] && !headers["X-Refresh-Token"]) {
     return null;
   }
 
   try {
     const res = await fetch(`${API_BASE}/api/v1/auth/me`, {
-      headers: { Authorization: `Bearer ${accessToken}` },
+      headers,
       cache: "no-store",
     });
+
+    // Handle auto-refreshed access token
+    await handleTokenRefreshResponse(res);
 
     if (!res.ok) {
       return null;

@@ -5,7 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useSession } from "next-auth/react";
+import { useAuth } from "@/lib/auth/auth-context";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -20,7 +20,7 @@ import { updatePollSchema, type UpdatePollFormValues } from "@/lib/validations/p
 export default function PollEditPage() {
   const params = useParams<{ pollId: string }>();
   const router = useRouter();
-  const { data: session, status: authStatus } = useSession();
+  const { user, status: authStatus } = useAuth();
   const [isPending, startTransition] = useTransition();
   const [loading, setLoading] = useState(true);
 
@@ -47,7 +47,7 @@ export default function PollEditPage() {
           return;
         }
         // Verify ownership
-        if (poll.userId !== session?.user?.id) {
+        if (poll.userId !== user?.id) {
           toast.error("수정 권한이 없습니다");
           router.replace(`/polls/${params.pollId}`);
           return;
@@ -62,7 +62,7 @@ export default function PollEditPage() {
         toast.error("데이터를 불러오지 못했습니다");
         router.replace("/");
       });
-  }, [params.pollId, router, form, authStatus, session?.user?.id]);
+  }, [params.pollId, router, form, authStatus, user?.id]);
 
   const onSubmit = (data: UpdatePollFormValues) => {
     startTransition(async () => {
