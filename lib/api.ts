@@ -1,7 +1,5 @@
 "use server";
 
-import { cookies } from "next/headers";
-
 import {
   listPostsApiV1PostsGet,
   getPostApiV1PostsPostIdGet,
@@ -36,37 +34,25 @@ import type {
   PresignedUrlRequest,
 } from "@/generated/openapi-client/types.gen";
 
+import { buildAuthHeaders, handleTokenRefreshResponse } from "@/lib/auth/tokens";
+
 // ========================================
 // Backend Base URL (for poll endpoints until openapi-client is regenerated)
 // ========================================
 
 const API_BASE = process.env.API_URL || "http://localhost:8000";
 
-const AUTH_COOKIE_NAME =
-  process.env.NODE_ENV === "production" ? "__Secure-grapoll-access-token" : "grapoll-access-token";
-
-async function getAuthToken(): Promise<string | null> {
-  try {
-    const cookieStore = await cookies();
-    return cookieStore.get(AUTH_COOKIE_NAME)?.value ?? null;
-  } catch {
-    return null;
-  }
-}
-
 async function apiFetch<T>(
   path: string,
   options?: RequestInit & { next?: NextFetchRequestConfig }
 ): Promise<{ data: T | null; error: string | null; status?: number }> {
   try {
-    const token = await getAuthToken();
+    const authHeaders = await buildAuthHeaders();
     const headers: Record<string, string> = {
       "Content-Type": "application/json",
+      ...authHeaders,
       ...(options?.headers as Record<string, string>),
     };
-    if (token) {
-      headers["Authorization"] = `Bearer ${token}`;
-    }
 
     const { next: nextConfig, ...restOptions } = options ?? {};
     const res = await fetch(`${API_BASE}${path}`, {
@@ -74,6 +60,10 @@ async function apiFetch<T>(
       headers,
       ...(nextConfig ? { next: nextConfig } : {}),
     });
+
+    // Handle auto-refreshed access token from middleware
+    await handleTokenRefreshResponse(res);
+
     if (!res.ok) {
       const body = await res.json().catch(() => ({}));
       return { data: null, error: body.detail || `HTTP ${res.status}`, status: res.status };

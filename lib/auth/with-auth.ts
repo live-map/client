@@ -1,28 +1,29 @@
 import * as Sentry from "@sentry/nextjs";
-import { cookies } from "next/headers";
 
 import { ERROR_MESSAGES } from "@/lib/constants/messages";
 import type { ActionResult, AuthContext, AuthenticatedUser } from "@/lib/types/actions";
+import { buildAuthHeaders, handleTokenRefreshResponse } from "@/lib/auth/tokens";
 
 const API_BASE = process.env.API_URL || "http://localhost:8000";
-const ACCESS_COOKIE =
-  process.env.NODE_ENV === "production" ? "__Secure-grapoll-access-token" : "grapoll-access-token";
 
 /**
- * Get current user from the access token cookie by calling backend /auth/me.
+ * Get current user from backend /auth/me, sending both tokens.
+ * The backend middleware auto-refreshes expired access tokens.
  */
 async function getServerSession(): Promise<AuthenticatedUser | null> {
-  const cookieStore = await cookies();
-  const accessToken = cookieStore.get(ACCESS_COOKIE)?.value;
+  const headers = await buildAuthHeaders();
 
-  if (!accessToken) {
+  if (!headers["Authorization"] && !headers["X-Refresh-Token"]) {
     return null;
   }
 
   try {
     const res = await fetch(`${API_BASE}/api/v1/auth/me`, {
-      headers: { Authorization: `Bearer ${accessToken}` },
+      headers,
     });
+
+    // Handle auto-refreshed access token
+    await handleTokenRefreshResponse(res);
 
     if (!res.ok) {
       return null;
