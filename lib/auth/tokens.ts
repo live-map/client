@@ -33,16 +33,22 @@ export async function getRefreshToken(): Promise<string | null> {
 
 /**
  * Update the access token cookie with a new value.
+ * Silently fails in Server Components (cookies are read-only there).
  */
 export async function updateAccessTokenCookie(newToken: string): Promise<void> {
-  const cookieStore = await cookies();
-  cookieStore.set(ACCESS_COOKIE, newToken, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
-    path: "/",
-    maxAge: 30 * 60, // 30 minutes
-  });
+  try {
+    const cookieStore = await cookies();
+    cookieStore.set(ACCESS_COOKIE, newToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      path: "/",
+      maxAge: 30 * 60, // 30 minutes
+    });
+  } catch {
+    // Server Components can't modify cookies — that's fine.
+    // The backend middleware will refresh again on the next request.
+  }
 }
 
 /**

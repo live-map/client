@@ -53,7 +53,7 @@ This is the **central module** that all other auth files import from. It elimina
 | `REFRESH_COOKIE`                    | Cookie name constant (env-aware)                                          |
 | `getAccessToken()`                  | Read access token from cookies (server-side)                              |
 | `getRefreshToken()`                 | Read refresh token from cookies (server-side)                             |
-| `updateAccessTokenCookie(newToken)` | Set a new access token cookie                                             |
+| `updateAccessTokenCookie(newToken)` | Set a new access token cookie (silently fails in Server Components)       |
 | `handleTokenRefreshResponse(res)`   | Check response for `X-New-Access-Token` header, update cookie if present  |
 | `buildAuthHeaders()`                | Build `{ Authorization: "Bearer ...", "X-Refresh-Token": "..." }` headers |
 
@@ -70,7 +70,17 @@ const res = await fetch(url, { headers });
 await handleTokenRefreshResponse(res);
 ```
 
-### 2. Server-Side Session Check (`lib/auth/session.ts`)
+### 2. Server Component Cookie Limitation
+
+> **Important**: Next.js **Server Components** can only **read** cookies, not **write** them. `cookies().set()` throws an error in Server Components. Only **Server Actions** and **Route Handlers** can modify cookies.
+
+`updateAccessTokenCookie()` wraps the `cookies().set()` call in a try/catch so it **silently fails** in Server Components. This is fine because:
+
+- The backend middleware will refresh the token again on the next request.
+- Server Actions and Route Handlers (where cookie writes succeed) will update the cookie when they can.
+- The user experience is not affected — the refresh is transparent.
+
+### 3. Server-Side Session Check (`lib/auth/session.ts`)
 
 Used by **Server Components** to check if the user is authenticated.
 
@@ -89,10 +99,10 @@ if (!session) {
 
 1. Reads both tokens from cookies via `buildAuthHeaders()`.
 2. Calls `GET /api/v1/auth/me` with both tokens.
-3. If the backend refreshes the token, `handleTokenRefreshResponse()` updates the cookie.
+3. If the backend refreshes the token, `handleTokenRefreshResponse()` attempts to update the cookie (silently fails in Server Components).
 4. Returns `{ user: { id, email, name, image, role } }` or `null`.
 
-### 3. Authenticated Server Actions (`lib/auth/with-auth.ts`)
+### 4. Authenticated Server Actions (`lib/auth/with-auth.ts`)
 
 A Higher-Order Function (HOF) that wraps Server Actions requiring authentication.
 
@@ -112,7 +122,7 @@ export const createPoll = withAuth(
 3. If user is authenticated, passes `ctx.user` to the wrapped action.
 4. If not authenticated, returns `{ error: "UNAUTHORIZED" }`.
 
-### 4. Manual API Fetch (`lib/api.ts`)
+### 5. Manual API Fetch (`lib/api.ts`)
 
 Used for poll endpoints that aren't yet part of the generated OpenAPI client.
 
@@ -128,7 +138,7 @@ export const getPollFeed = async (sort, search, limit, offset) => {
 };
 ```
 
-### 5. OpenAPI Client Config (`config/openapi-runtime.ts`)
+### 6. OpenAPI Client Config (`config/openapi-runtime.ts`)
 
 The generated OpenAPI client (for posts, comments, media endpoints) is configured with a custom `fetch` wrapper.
 
@@ -161,7 +171,7 @@ export const createClientConfig: CreateClientConfig = (config) => ({
 
 This means **all OpenAPI client calls** (posts, comments, media, likes) automatically get token refresh support.
 
-### 6. Client-Side Session Route (`app/api/auth/me/route.ts`)
+### 7. Client-Side Session Route (`app/api/auth/me/route.ts`)
 
 This is a Next.js API route that the **client-side** (browser) calls to check session status (e.g., from a `useEffect` or SWR hook).
 
@@ -220,7 +230,8 @@ Browser/Server Component
     │
     └─ handleTokenRefreshResponse()
         └─ updateAccessTokenCookie("<new-access>")
-            → Cookie updated, next request uses new token
+            → Cookie updated (Server Action / Route Handler)
+            → Silently skipped (Server Component — next request refreshes again)
 ```
 
 ### Both Tokens Expired/Invalid
@@ -294,3 +305,5 @@ Browser/Server Component
 3. **httpOnly cookies**: Tokens are not accessible via JavaScript (`document.cookie`). This prevents XSS attacks from stealing tokens. The server-side Next.js code reads them via `cookies()` from `next/headers`.
 
 4. **Two cookie name variants**: Development uses `grapoll-access-token`, production uses `__Secure-grapoll-access-token` (the `__Secure-` prefix is a browser security feature that ensures the cookie is only sent over HTTPS).
+
+5. **Server Component cookie limitation**: Next.js Server Components can only read cookies, not write them. `updateAccessTokenCookie()` uses try/catch to silently handle this. The cookie gets updated on the next Server Action or Route Handler call instead. This does NOT affect user experience — the backend middleware refreshes the token on every request regardless.
