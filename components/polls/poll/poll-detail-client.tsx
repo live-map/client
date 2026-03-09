@@ -529,6 +529,16 @@ export function PollDetailClient({
   // Optimistic comment likes: commentId → likes count
   const [commentLikes, setCommentLikes] = useState<Map<string, number>>(new Map());
 
+  // 투표 쿨다운 (3초)
+  const [cooldownRemaining, setCooldownRemaining] = useState(0);
+  const cooldownRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (cooldownRef.current) clearInterval(cooldownRef.current);
+    };
+  }, []);
+
   // 조회수 증가
   useEffect(() => {
     incrementViewCount(poll.id);
@@ -581,6 +591,19 @@ export function PollDetailClient({
       setSelectedValue(voteValue);
       setHasVoted(true);
       router.refresh();
+
+      // 쿨다운 타이머 시작 (3초)
+      setCooldownRemaining(3);
+      if (cooldownRef.current) clearInterval(cooldownRef.current);
+      cooldownRef.current = setInterval(() => {
+        setCooldownRemaining((prev) => {
+          if (prev <= 1) {
+            if (cooldownRef.current) clearInterval(cooldownRef.current);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
 
       setTimeout(() => {
         const resultsSection = document.getElementById("results-section");
@@ -1218,9 +1241,10 @@ export function PollDetailClient({
                       <button
                         type="button"
                         onClick={() => setVoteBarExpanded(true)}
-                        className="ml-auto text-[11px] text-primary hover:underline flex-shrink-0"
+                        disabled={cooldownRemaining > 0}
+                        className="ml-auto text-[11px] text-primary hover:underline flex-shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
                       >
-                        변경
+                        {cooldownRemaining > 0 ? `${cooldownRemaining}초` : "변경"}
                       </button>
                     )}
                   </div>

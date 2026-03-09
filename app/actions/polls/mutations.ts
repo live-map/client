@@ -28,6 +28,8 @@ function getVoteErrorMessage(status: number | undefined, fallback: string): stri
       return "로그인이 필요합니다";
     case 409:
       return "이미 투표하셨습니다";
+    case 429:
+      return "잠시 후 다시 시도해주세요";
     case 404:
       return "존재하지 않는 여론조사입니다";
     case 400:
