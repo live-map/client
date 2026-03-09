@@ -14,6 +14,7 @@ import {
   MoreVertical,
   Pencil,
   Trash2,
+  Shield,
 } from "lucide-react";
 import DOMPurify from "dompurify";
 import { Button } from "@/components/ui/button";
@@ -818,6 +819,10 @@ export function PollDetailClient({
           )}
           <p className="text-xs text-muted-foreground mt-3 text-center">
             총 {poll.totalVotes.toLocaleString()}명 참여
+          </p>
+          <p className="text-[10px] text-muted-foreground flex items-center justify-center gap-1 mt-2">
+            <Shield className="w-3 h-3" />
+            보안 투표 · 중복 검증
           </p>
         </div>
       </section>
