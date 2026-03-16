@@ -3,11 +3,17 @@
 import { Button } from "@/components/ui/button";
 import { signInWithOAuth } from "@/app/actions/auth";
 
+// OAuthButtonProps interface defines the props for the OAuthButton component
+// provider - The provider to use for the button (google or kakao)
+// callbackUrl - The URL to redirect to after the button is clicked
 interface OAuthButtonProps {
   provider: "google" | "kakao";
   callbackUrl?: string;
 }
 
+// providerConfig object A lookuptable mapping each provider key to its configuration
+// name - The display name of the provider
+// icon - The icon of the provider (inline SVG icon for the provider)
 const providerConfig = {
   google: {
     name: "Google",
