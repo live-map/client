@@ -119,7 +119,7 @@ export async function createPoll(dto: {
   sources?: { title: string; url: string; sourceType?: string; description?: string }[];
 }): Promise<ActionResult<{ id: string }>> {
   try {
-    const { data, error } = await apiCreatePoll({
+    const { data, error, status } = await apiCreatePoll({
       title: dto.title,
       description: dto.description,
       interactionType: dto.interactionType || "SINGLE_CHOICE",
@@ -129,7 +129,8 @@ export async function createPoll(dto: {
     });
 
     if (error) {
-      return { error };
+      if (status === 401) return { error: "로그인이 필요합니다", status };
+      return { error, status };
     }
 
     updateTag("polls");
@@ -148,10 +149,12 @@ export async function updatePoll(
   dto: { title?: string; description?: string; status?: string }
 ): Promise<ActionResult> {
   try {
-    const { error } = await apiUpdatePoll(id, dto);
+    const { error, status } = await apiUpdatePoll(id, dto);
 
     if (error) {
-      return { error };
+      if (status === 401) return { error: "로그인이 필요합니다", status };
+      if (status === 403) return { error: "수정 권한이 없습니다", status };
+      return { error, status };
     }
 
     updateTag(`poll-${id}`);
@@ -167,10 +170,12 @@ export async function updatePoll(
  */
 export async function deletePoll(id: string): Promise<ActionResult> {
   try {
-    const { error } = await apiDeletePoll(id);
+    const { error, status } = await apiDeletePoll(id);
 
     if (error) {
-      return { error };
+      if (status === 401) return { error: "로그인이 필요합니다", status };
+      if (status === 403) return { error: "삭제 권한이 없습니다", status };
+      return { error, status };
     }
 
     updateTag("polls");

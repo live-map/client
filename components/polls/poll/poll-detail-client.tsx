@@ -553,6 +553,10 @@ export function PollDetailClient({
   }, []);
 
   const handleVote = (value: string | string[] | number | Record<string, number>) => {
+    if (!isLoggedIn) {
+      openLoginModal("투표하려면 로그인이 필요합니다");
+      return;
+    }
     const voteValue = value as string | string[] | number;
 
     startTransition(async () => {
