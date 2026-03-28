@@ -9,7 +9,12 @@ import type { NextRequest } from "next/server";
  */
 
 /** Routes that require authentication */
-const PROTECTED_PATTERNS = [/^\/profile/, /^\/polls\/[^/]+\/edit/];
+const PROTECTED_PATTERNS = [
+  /^\/profile/,
+  /^\/polls\/[^/]+\/edit/,
+  /^\/polls\/suggest\/new/,
+  /^\/community\/new/,
+];
 
 function isProtectedRoute(pathname: string): boolean {
   return PROTECTED_PATTERNS.some((pattern) => pattern.test(pathname));
@@ -19,7 +24,6 @@ const ACCESS_COOKIE = "grapoll-access-token";
 const ACCESS_COOKIE_SECURE = "__Secure-grapoll-access-token";
 const REFRESH_COOKIE = "grapoll-refresh-token";
 const REFRESH_COOKIE_SECURE = "__Secure-grapoll-refresh-token";
-
 
 export default async function proxy(request: NextRequest) {
   const { nextUrl } = request;

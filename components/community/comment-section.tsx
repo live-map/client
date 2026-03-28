@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { MessageSquare } from "lucide-react";
 
+import { useAuth } from "@/lib/auth/auth-context";
+import { useLoginModal } from "@/components/auth/login-modal";
 import { createComment, getCommentTree } from "@/lib/api";
 import { formatRelativeTime } from "@/lib/utils/format";
 import type { CommentTreeResponse } from "@/generated/openapi-client/types.gen";
@@ -34,8 +36,14 @@ function CommentItem({ comment, postId, depth, onCommentCreated }: CommentItemPr
   const [showReplyInput, setShowReplyInput] = useState(false);
   const [replyContent, setReplyContent] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const { user } = useAuth();
+  const { openLoginModal } = useLoginModal();
 
   const handleReply = async () => {
+    if (!user) {
+      openLoginModal("답글을 작성하려면 로그인이 필요합니다");
+      return;
+    }
     if (!replyContent.trim() || submitting) return;
     setSubmitting(true);
     const { error } = await createComment({
@@ -131,6 +139,8 @@ export function CommentSection({ postId, initialComments }: CommentSectionProps)
   const [comments, setComments] = useState<CommentTreeResponse[]>(initialComments);
   const [newComment, setNewComment] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const { user } = useAuth();
+  const { openLoginModal } = useLoginModal();
 
   const totalCount = countComments(comments);
 
@@ -142,6 +152,10 @@ export function CommentSection({ postId, initialComments }: CommentSectionProps)
   };
 
   const handleSubmit = async () => {
+    if (!user) {
+      openLoginModal("댓글을 작성하려면 로그인이 필요합니다");
+      return;
+    }
     if (!newComment.trim() || submitting) return;
     setSubmitting(true);
     const { error } = await createComment({

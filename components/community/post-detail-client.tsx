@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Eye, ThumbsUp, Trash2 } from "lucide-react";
 import { useAuth } from "@/lib/auth/auth-context";
+import { useLoginModal } from "@/components/auth/login-modal";
 import { toast } from "sonner";
 
 import { likePost, unlikePost, deletePost } from "@/lib/api";
@@ -29,6 +30,7 @@ interface PostDetailClientProps {
 export function PostDetailClient({ post, initialComments }: PostDetailClientProps) {
   const router = useRouter();
   const { user: authUser } = useAuth();
+  const { openLoginModal } = useLoginModal();
   const [isLiked, setIsLiked] = useState(post.is_liked ?? false);
   const [likeCount, setLikeCount] = useState(post.like_count ?? 0);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -48,6 +50,11 @@ export function PostDetailClient({ post, initialComments }: PostDetailClientProp
   };
 
   const handleLikeToggle = async () => {
+    if (!authUser) {
+      openLoginModal("추천하려면 로그인이 필요합니다");
+      return;
+    }
+
     const prevLiked = isLiked;
     const prevCount = likeCount;
 
@@ -61,6 +68,7 @@ export function PostDetailClient({ post, initialComments }: PostDetailClientProp
       // Revert on error
       setIsLiked(prevLiked);
       setLikeCount(prevCount);
+      toast.error("오류가 발생했습니다");
     }
   };
 

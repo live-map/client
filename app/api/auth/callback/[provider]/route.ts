@@ -33,8 +33,17 @@ export async function GET(
   const code = searchParams.get("code");
   const state = searchParams.get("state");
 
-  // 로그인 전에 사용자가 있던 페이지 (signInWithOAuth에서 쿠키에 저장해둠)
-  const callbackUrl = request.cookies.get("auth-callback-url")?.value || "/";
+  // CSRF 검증: 쿠키에 저장한 state와 URL의 state 비교
+  const storedState = request.cookies.get("auth-state")?.value;
+  if (!state || !storedState || state !== storedState) {
+    return NextResponse.redirect(new URL("/auth/signin?error=invalid_state", FRONTEND_URL));
+  }
+
+  // 로그인 전에 사용자가 있던 페이지 + Open Redirect 방지
+  let callbackUrl = request.cookies.get("auth-callback-url")?.value || "/";
+  if (!callbackUrl.startsWith("/") || callbackUrl.startsWith("//")) {
+    callbackUrl = "/";
+  }
 
   // authorization code가 없으면 OAuth 흐름이 실패한 것
   if (!code) {
@@ -69,8 +78,9 @@ export async function GET(
     // 로그인 전 페이지로 리다이렉트 (e.g. "/", "/polls/123")
     const response = NextResponse.redirect(new URL(callbackUrl, FRONTEND_URL));
 
-    // 로그인 완료했으므로 임시 callbackUrl 쿠키 삭제
+    // 임시 쿠키 삭제 (일회성)
     response.cookies.delete("auth-callback-url");
+    response.cookies.delete("auth-state");
 
     // 백엔드가 발급한 access token을 httpOnly 쿠키에 저장 (30분)
     // httpOnly: JS에서 접근 불가 (XSS 방어)
