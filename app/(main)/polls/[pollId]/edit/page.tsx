@@ -73,7 +73,6 @@ export default function PollEditPage() {
       }
       toast.success("여론조사가 수정되었습니다");
       router.push(`/polls/${params.pollId}`);
-      router.refresh();
     });
   };
 
