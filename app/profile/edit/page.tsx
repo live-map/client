@@ -1,35 +1,45 @@
 "use client";
 
-import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Camera, X } from "lucide-react";
+import { ArrowLeft, Camera } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { useAuth } from "@/lib/auth/auth-context";
+import { updateProfile } from "@/lib/api";
+import { toast } from "sonner";
 
-const interestOptions = ["정치", "경제", "사회", "IT/기술", "문화", "스포츠", "환경", "교육"];
+const profileSchema = z.object({
+  name: z.string().min(1, "닉네임을 입력해주세요").max(20, "닉네임은 20자 이내로 입력해주세요"),
+});
+
+type ProfileFormValues = z.infer<typeof profileSchema>;
 
 export default function ProfileEditPage() {
   const router = useRouter();
-  const [nickname, setNickname] = useState("투명한시민");
-  const [bio, setBio] = useState("투명한 대한민국을 만들어가는 시민입니다.");
-  const [interests, setInterests] = useState(["정치", "경제", "사회"]);
-  const [isLoading, setIsLoading] = useState(false);
+  const { user, refreshAuth } = useAuth();
 
-  const handleInterestToggle = (interest: string) => {
-    if (interests.includes(interest)) {
-      setInterests(interests.filter((i) => i !== interest));
-    } else if (interests.length < 5) {
-      setInterests([...interests, interest]);
+  const form = useForm<ProfileFormValues>({
+    resolver: zodResolver(profileSchema),
+    defaultValues: {
+      name: user?.name ?? "",
+    },
+  });
+
+  const onSubmit = async (data: ProfileFormValues) => {
+    const result = await updateProfile({ name: data.name });
+    if (result.error) {
+      toast.error(result.error);
+      return;
     }
-  };
-
-  const handleSave = async () => {
-    setIsLoading(true);
-    // TODO: API 호출
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    setIsLoading(false);
+    toast.success("프로필이 수정되었습니다");
+    refreshAuth();
     router.push("/profile");
   };
+
+  const nameValue = form.watch("name");
 
   return (
     <div className="min-h-screen bg-background pb-24">
@@ -48,83 +58,55 @@ export default function ProfileEditPage() {
         </div>
       </header>
 
-      <main className="max-w-lg mx-auto px-4 py-6">
-        {/* 프로필 이미지 */}
-        <div className="flex justify-center mb-8">
-          <div className="relative">
-            <div className="w-24 h-24 rounded-full bg-primary/10 flex items-center justify-center text-3xl font-bold text-primary">
-              투
-            </div>
-            <button
-              type="button"
-              className="absolute bottom-0 right-0 w-8 h-8 bg-primary text-primary-foreground rounded-full flex items-center justify-center shadow-lg hover:bg-primary/90 transition-colors"
-            >
-              <Camera className="w-4 h-4" />
-            </button>
-          </div>
-        </div>
-
-        {/* 닉네임 */}
-        <div className="mb-6">
-          <label className="block text-sm font-medium text-foreground mb-2">닉네임</label>
-          <input
-            type="text"
-            value={nickname}
-            onChange={(e) => setNickname(e.target.value)}
-            maxLength={20}
-            className="w-full px-3 py-2.5 text-sm bg-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
-            placeholder="닉네임을 입력하세요"
-          />
-          <p className="text-xs text-muted-foreground mt-1.5">{nickname.length}/20</p>
-        </div>
-
-        {/* 소개 */}
-        <div className="mb-6">
-          <label className="block text-sm font-medium text-foreground mb-2">소개</label>
-          <textarea
-            value={bio}
-            onChange={(e) => setBio(e.target.value)}
-            maxLength={100}
-            rows={3}
-            className="w-full px-3 py-2.5 text-sm bg-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors resize-none"
-            placeholder="자신을 소개해주세요"
-          />
-          <p className="text-xs text-muted-foreground mt-1.5">{bio.length}/100</p>
-        </div>
-
-        {/* 관심 분야 */}
-        <div className="mb-6">
-          <label className="block text-sm font-medium text-foreground mb-2">
-            관심 분야 <span className="text-muted-foreground font-normal">(최대 5개)</span>
-          </label>
-          <div className="flex flex-wrap gap-2">
-            {interestOptions.map((interest) => (
+      <form onSubmit={form.handleSubmit(onSubmit)}>
+        <main className="max-w-lg mx-auto px-4 py-6">
+          {/* 프로필 이미지 */}
+          <div className="flex justify-center mb-8">
+            <div className="relative">
+              <div className="w-24 h-24 rounded-full bg-primary/10 flex items-center justify-center text-3xl font-bold text-primary">
+                {nameValue?.charAt(0) ?? "?"}
+              </div>
               <button
-                key={interest}
                 type="button"
-                onClick={() => handleInterestToggle(interest)}
-                className={`px-3 py-1.5 text-sm rounded-full transition-colors ${
-                  interests.includes(interest)
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-muted text-muted-foreground hover:bg-muted/80"
-                }`}
+                className="absolute bottom-0 right-0 w-8 h-8 bg-primary text-primary-foreground rounded-full flex items-center justify-center shadow-lg hover:bg-primary/90 transition-colors"
               >
-                {interest}
-                {interests.includes(interest) && <X className="w-3 h-3 ml-1 inline" />}
+                <Camera className="w-4 h-4" />
               </button>
-            ))}
+            </div>
+          </div>
+
+          {/* 닉네임 */}
+          <div className="mb-6">
+            <label className="block text-sm font-medium text-foreground mb-2">닉네임</label>
+            <input
+              type="text"
+              {...form.register("name")}
+              maxLength={20}
+              className="w-full px-3 py-2.5 text-sm bg-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
+              placeholder="닉네임을 입력하세요"
+            />
+            {form.formState.errors.name && (
+              <p className="text-xs text-destructive mt-1.5">
+                {form.formState.errors.name.message}
+              </p>
+            )}
+            <p className="text-xs text-muted-foreground mt-1.5">{nameValue?.length ?? 0}/20</p>
+          </div>
+        </main>
+
+        {/* 저장 버튼 */}
+        <div className="fixed bottom-0 left-0 right-0 bg-background/80 backdrop-blur-xl border-t border-border/50 shadow-[0_-4px_20px_rgba(0,0,0,0.08)]">
+          <div className="max-w-lg mx-auto px-4 py-3">
+            <Button
+              type="submit"
+              className="w-full"
+              disabled={form.formState.isSubmitting || !nameValue?.trim()}
+            >
+              {form.formState.isSubmitting ? "저장 중..." : "저장하기"}
+            </Button>
           </div>
         </div>
-      </main>
-
-      {/* 저장 버튼 */}
-      <div className="fixed bottom-0 left-0 right-0 bg-background/80 backdrop-blur-xl border-t border-border/50 shadow-[0_-4px_20px_rgba(0,0,0,0.08)]">
-        <div className="max-w-lg mx-auto px-4 py-3">
-          <Button className="w-full" onClick={handleSave} disabled={isLoading || !nickname.trim()}>
-            {isLoading ? "저장 중..." : "저장하기"}
-          </Button>
-        </div>
-      </div>
+      </form>
     </div>
   );
 }

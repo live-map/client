@@ -191,6 +191,17 @@ export const incrementPollViewCount = async (pollId: string) => {
 };
 
 // ========================================
+// Profile
+// ========================================
+
+export const updateProfile = async (body: { name?: string; image?: string }) => {
+  return apiFetch("/api/v1/auth/me", {
+    method: "PATCH",
+    body: JSON.stringify(body),
+  });
+};
+
+// ========================================
 // Posts
 // ========================================
 
