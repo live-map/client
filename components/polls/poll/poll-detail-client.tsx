@@ -268,7 +268,7 @@ const RESEARCH_STEPS = [
   { key: "reviewing", label: "검토", description: "리포트의 정확성과 균형을 검토합니다" },
 ] as const;
 
-function ResearchProgress({ pollId }: { pollId: string }) {
+function ResearchProgress({ pollId, hasAiContent }: { pollId: string; hasAiContent: boolean }) {
   const router = useRouter();
   const [status, setStatus] = useState<string>("pending");
   const [currentStep, setCurrentStep] = useState<string | null>(null);
@@ -310,10 +310,10 @@ function ResearchProgress({ pollId }: { pollId: string }) {
     }
   }, [status, pollId, router]);
 
-  // pending = 리서치가 아직 시작되지 않음 (또는 존재하지 않음) → 표시 안 함
-  if (status === "pending") {
-    return null;
-  }
+  // pending = 리서치가 아직 시작되지 않음 → 표시 안 함
+  // completed + 이미 콘텐츠 있음 → 이미 표시되고 있으므로 숨김
+  if (status === "pending") return null;
+  if (status === "completed" && hasAiContent) return null;
 
   // failed = 리서치 실패 → 사용자에게 알림
   if (status === "failed") {
@@ -1071,8 +1071,8 @@ export function PollDetailClient({
       {/* Content — AI Research + Comments (full width) */}
       <div className="lg:mt-6">
         <div>
-          {/* Research Progress */}
-          {!poll.aiContent && <ResearchProgress pollId={poll.id} />}
+          {/* Research Progress — 항상 렌더링, 내부에서 상태에 따라 self-hide */}
+          <ResearchProgress pollId={poll.id} hasAiContent={!!poll.aiContent} />
 
           {/* AI Article Section */}
           {poll.aiContent && (
