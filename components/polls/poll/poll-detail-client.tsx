@@ -272,6 +272,7 @@ function ResearchProgress({ pollId }: { pollId: string }) {
   const router = useRouter();
   const [status, setStatus] = useState<string>("pending");
   const [currentStep, setCurrentStep] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const pollStatus = async () => {
@@ -282,6 +283,9 @@ function ResearchProgress({ pollId }: { pollId: string }) {
         setStatus(data.status);
         if (data.currentStep || data.current_step) {
           setCurrentStep(data.currentStep || data.current_step);
+        }
+        if (data.error) {
+          setError(data.error);
         }
       } catch {
         // ignore fetch errors
@@ -301,14 +305,33 @@ function ResearchProgress({ pollId }: { pollId: string }) {
       const timeout = setTimeout(async () => {
         await revalidatePoll(pollId);
         router.refresh();
-      }, 500);
+      }, 1500);
       return () => clearTimeout(timeout);
     }
   }, [status, pollId, router]);
 
   // pending = 리서치가 아직 시작되지 않음 (또는 존재하지 않음) → 표시 안 함
-  if (status === "pending" || status === "failed") {
+  if (status === "pending") {
     return null;
+  }
+
+  // failed = 리서치 실패 → 사용자에게 알림
+  if (status === "failed") {
+    return (
+      <section className="px-4 mt-6">
+        <div className="bg-card border border-destructive/30 rounded-xl p-4">
+          <div className="flex items-center gap-2 mb-2">
+            <div className="w-6 h-6 rounded-full bg-destructive/10 flex items-center justify-center">
+              <span className="text-[10px] font-bold text-destructive">!</span>
+            </div>
+            <h2 className="text-sm font-semibold text-foreground">팩트 리서치 실패</h2>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            {error || "리서치 처리 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요."}
+          </p>
+        </div>
+      </section>
+    );
   }
 
   const stepIndex = RESEARCH_STEPS.findIndex((s) => s.key === currentStep);
