@@ -155,29 +155,35 @@ export default function SettingsPage() {
           </div>
 
           <div className="space-y-1">
-            <Link
-              href="/profile/settings/password"
-              className="flex items-center justify-between py-3 hover:bg-muted/50 -mx-2 px-2 rounded-lg transition-colors"
-            >
-              <span className="text-sm text-foreground">비밀번호 변경</span>
+            <div className="flex items-center justify-between py-3 -mx-2 px-2 rounded-lg pointer-events-none opacity-50">
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-foreground">비밀번호 변경</span>
+                <span className="text-[10px] px-1.5 py-0.5 bg-muted text-muted-foreground rounded-full">
+                  준비 중
+                </span>
+              </div>
               <ChevronRight className="w-4 h-4 text-muted-foreground" />
-            </Link>
+            </div>
 
-            <Link
-              href="/profile/settings/email"
-              className="flex items-center justify-between py-3 hover:bg-muted/50 -mx-2 px-2 rounded-lg transition-colors"
-            >
-              <span className="text-sm text-foreground">이메일 변경</span>
+            <div className="flex items-center justify-between py-3 -mx-2 px-2 rounded-lg pointer-events-none opacity-50">
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-foreground">이메일 변경</span>
+                <span className="text-[10px] px-1.5 py-0.5 bg-muted text-muted-foreground rounded-full">
+                  준비 중
+                </span>
+              </div>
               <ChevronRight className="w-4 h-4 text-muted-foreground" />
-            </Link>
+            </div>
 
-            <Link
-              href="/profile/settings/social"
-              className="flex items-center justify-between py-3 hover:bg-muted/50 -mx-2 px-2 rounded-lg transition-colors"
-            >
-              <span className="text-sm text-foreground">소셜 계정 연동</span>
+            <div className="flex items-center justify-between py-3 -mx-2 px-2 rounded-lg pointer-events-none opacity-50">
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-foreground">소셜 계정 연동</span>
+                <span className="text-[10px] px-1.5 py-0.5 bg-muted text-muted-foreground rounded-full">
+                  준비 중
+                </span>
+              </div>
               <ChevronRight className="w-4 h-4 text-muted-foreground" />
-            </Link>
+            </div>
           </div>
         </section>
 
