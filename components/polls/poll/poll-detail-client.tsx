@@ -308,7 +308,7 @@ function ResearchProgress({ pollId, hasAiContent }: { pollId: string; hasAiConte
       }, 1500);
       return () => clearTimeout(timeout);
     }
-  }, [status, pollId, router]);
+  }, [status, pollId]);
 
   // pending = 리서치가 아직 시작되지 않음 → 표시 안 함
   // completed + 이미 콘텐츠 있음 → 이미 표시되고 있으므로 숨김
@@ -607,7 +607,6 @@ export function PollDetailClient({
 
       setSelectedValue(voteValue);
       setHasVoted(true);
-      router.refresh();
 
       setTimeout(() => {
         const resultsSection = document.getElementById("results-section");
@@ -642,7 +641,6 @@ export function PollDetailClient({
 
       setCommentText("");
       toast.success("댓글이 등록되었습니다");
-      router.refresh();
     });
   };
 
@@ -672,7 +670,6 @@ export function PollDetailClient({
       setReplyText("");
       setReplyingTo(null);
       toast.success("답글이 등록되었습니다");
-      router.refresh();
     });
   };
 
@@ -725,7 +722,6 @@ export function PollDetailClient({
             return;
           }
           toast.success("댓글이 삭제되었습니다");
-          router.refresh();
         });
       },
     });
