@@ -269,7 +269,6 @@ const RESEARCH_STEPS = [
 ] as const;
 
 function ResearchProgress({ pollId }: { pollId: string }) {
-  const router = useRouter();
   const [status, setStatus] = useState<string>("pending");
   const [currentStep, setCurrentStep] = useState<string | null>(null);
 
@@ -300,11 +299,10 @@ function ResearchProgress({ pollId }: { pollId: string }) {
     if (status === "completed") {
       const timeout = setTimeout(async () => {
         await revalidatePoll(pollId);
-        router.refresh();
       }, 500);
       return () => clearTimeout(timeout);
     }
-  }, [status, pollId, router]);
+  }, [status, pollId]);
 
   // pending = 리서치가 아직 시작되지 않음 (또는 존재하지 않음) → 표시 안 함
   if (status === "pending" || status === "failed") {
@@ -584,7 +582,6 @@ export function PollDetailClient({
 
       setSelectedValue(voteValue);
       setHasVoted(true);
-      router.refresh();
 
       setTimeout(() => {
         const resultsSection = document.getElementById("results-section");
@@ -619,7 +616,6 @@ export function PollDetailClient({
 
       setCommentText("");
       toast.success("댓글이 등록되었습니다");
-      router.refresh();
     });
   };
 
@@ -649,7 +645,6 @@ export function PollDetailClient({
       setReplyText("");
       setReplyingTo(null);
       toast.success("답글이 등록되었습니다");
-      router.refresh();
     });
   };
 
@@ -702,7 +697,6 @@ export function PollDetailClient({
             return;
           }
           toast.success("댓글이 삭제되었습니다");
-          router.refresh();
         });
       },
     });

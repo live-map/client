@@ -50,6 +50,7 @@ const TYPE_LABELS: Record<InteractionType, { label: string; icon: string }> = {
   MULTIPLE_CHOICE: { label: "복수선택", icon: "✅" },
   SLIDER: { label: "척도", icon: "📊" },
   RANKING: { label: "순위", icon: "🏆" },
+  EMOJI_REACTION: { label: "이모지 반응", icon: "😀" },
 };
 
 export function PollForm() {

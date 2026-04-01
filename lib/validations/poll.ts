@@ -33,6 +33,7 @@ export const interactionTypes = [
   "MULTIPLE_CHOICE",
   "SLIDER",
   "RANKING",
+  "EMOJI_REACTION",
 ] as const;
 
 export type InteractionType = (typeof interactionTypes)[number];
@@ -61,7 +62,14 @@ export const createPollSchema = z
       .min(1, { error: "제목을 입력해주세요" })
       .max(200, { error: "제목은 200자 이내로 입력해주세요" }),
     description: z.string().max(2000, { error: "설명은 2000자 이내로 입력해주세요" }).optional(),
-    interactionType: z.enum(["SINGLE_CHOICE", "BINARY", "MULTIPLE_CHOICE", "SLIDER", "RANKING"]),
+    interactionType: z.enum([
+      "SINGLE_CHOICE",
+      "BINARY",
+      "MULTIPLE_CHOICE",
+      "SLIDER",
+      "RANKING",
+      "EMOJI_REACTION",
+    ]),
     category: z.string().optional(),
     options: z
       .array(pollOptionSchema)
