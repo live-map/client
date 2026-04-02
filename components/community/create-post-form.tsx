@@ -10,7 +10,6 @@ import { toast } from "sonner";
 import { createPostSchema, type CreatePostFormValues } from "@/lib/validations/post";
 import { validateImageFile } from "@/lib/validations/media";
 import { createPost, generatePresignedUrl } from "@/lib/api";
-import { useAuthAction } from "@/lib/hooks/use-auth-action";
 import type { PostMediaCreate } from "@/generated/openapi-client/types.gen";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -28,7 +27,6 @@ export function CreatePostForm() {
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [files, setFiles] = useState<MediaPreview[]>([]);
-  const { isAuthError } = useAuthAction();
 
   const form = useForm<CreatePostFormValues>({
     resolver: zodResolver(createPostSchema),
@@ -69,24 +67,13 @@ export function CreatePostForm() {
     try {
       const media: PostMediaCreate[] = [];
       for (const { file } of files) {
-        const {
-          data: presigned,
-          error: presignedError,
-          status: presignedStatus,
-        } = await generatePresignedUrl({
+        const { data: presigned, error: presignedError } = await generatePresignedUrl({
           filename: file.name,
           content_type: file.type,
           folder: "posts",
         });
 
         if (presignedError || !presigned) {
-          if (
-            isAuthError(
-              { error: String(presignedError), status: presignedStatus },
-              "게시글을 작성하려면 로그인이 필요합니다"
-            )
-          )
-            return;
           toast.error("이미지 업로드 URL 생성에 실패했습니다.");
           return;
         }
@@ -110,17 +97,13 @@ export function CreatePostForm() {
         });
       }
 
-      const { error, status } = await createPost({
+      const { error } = await createPost({
         title: data.title,
         content: data.content,
         media: media.length > 0 ? media : undefined,
       });
 
       if (error) {
-        if (
-          isAuthError({ error: String(error), status }, "게시글을 작성하려면 로그인이 필요합니다")
-        )
-          return;
         toast.error("게시글 작성에 실패했습니다.");
         return;
       }

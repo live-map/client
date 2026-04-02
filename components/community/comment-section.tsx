@@ -5,7 +5,6 @@ import { MessageSquare } from "lucide-react";
 
 import { useAuth } from "@/lib/auth/auth-context";
 import { useLoginModal } from "@/components/auth/login-modal";
-import { useAuthAction } from "@/lib/hooks/use-auth-action";
 import { createComment, getCommentTree } from "@/lib/api";
 import { formatRelativeTime } from "@/lib/utils/format";
 import type { CommentTreeResponse } from "@/generated/openapi-client/types.gen";
@@ -39,7 +38,6 @@ function CommentItem({ comment, postId, depth, onCommentCreated }: CommentItemPr
   const [submitting, setSubmitting] = useState(false);
   const { user } = useAuth();
   const { openLoginModal } = useLoginModal();
-  const { isAuthError } = useAuthAction();
 
   const handleReply = async () => {
     if (!user) {
@@ -48,16 +46,12 @@ function CommentItem({ comment, postId, depth, onCommentCreated }: CommentItemPr
     }
     if (!replyContent.trim() || submitting) return;
     setSubmitting(true);
-    const { error, status } = await createComment({
+    const { error } = await createComment({
       post_id: postId,
       content: replyContent.trim(),
       parent_id: comment.id,
     });
     setSubmitting(false);
-    if (error) {
-      if (isAuthError({ error: String(error), status }, "답글을 작성하려면 로그인이 필요합니다"))
-        return;
-    }
     if (!error) {
       setReplyContent("");
       setShowReplyInput(false);
@@ -147,7 +141,6 @@ export function CommentSection({ postId, initialComments }: CommentSectionProps)
   const [submitting, setSubmitting] = useState(false);
   const { user } = useAuth();
   const { openLoginModal } = useLoginModal();
-  const { isAuthError } = useAuthAction();
 
   const totalCount = countComments(comments);
 
@@ -165,15 +158,11 @@ export function CommentSection({ postId, initialComments }: CommentSectionProps)
     }
     if (!newComment.trim() || submitting) return;
     setSubmitting(true);
-    const { error, status } = await createComment({
+    const { error } = await createComment({
       post_id: postId,
       content: newComment.trim(),
     });
     setSubmitting(false);
-    if (error) {
-      if (isAuthError({ error: String(error), status }, "댓글을 작성하려면 로그인이 필요합니다"))
-        return;
-    }
     if (!error) {
       setNewComment("");
       await refetchComments();

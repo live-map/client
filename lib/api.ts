@@ -225,32 +225,32 @@ export const getPost = async (postId: string) => {
 };
 
 export const createPost = async (body: PostCreate) => {
-  const { data, error, response } = await createPostApiV1PostsPost({
+  const { data, error } = await createPostApiV1PostsPost({
     body,
   });
-  return { data, error, status: response.status };
+  return { data, error };
 };
 
 export const updatePost = async (postId: string, body: PostUpdate) => {
-  const { data, error, response } = await updatePostApiV1PostsPostIdPatch({
+  const { data, error } = await updatePostApiV1PostsPostIdPatch({
     path: { post_id: postId },
     body,
   });
-  return { data, error, status: response.status };
+  return { data, error };
 };
 
 export const deletePost = async (postId: string) => {
-  const { data, error, response } = await deletePostApiV1PostsPostIdDelete({
+  const { data, error } = await deletePostApiV1PostsPostIdDelete({
     path: { post_id: postId },
   });
-  return { data, error, status: response.status };
+  return { data, error };
 };
 
 export const hardDeletePost = async (postId: string) => {
-  const { data, error, response } = await hardDeletePostApiV1PostsPostIdHardDelete({
+  const { data, error } = await hardDeletePostApiV1PostsPostIdHardDelete({
     path: { post_id: postId },
   });
-  return { data, error, status: response.status };
+  return { data, error };
 };
 
 // ========================================
@@ -258,17 +258,17 @@ export const hardDeletePost = async (postId: string) => {
 // ========================================
 
 export const likePost = async (postId: string) => {
-  const { data, error, response } = await likePostApiV1PostsPostIdLikePost({
+  const { data, error } = await likePostApiV1PostsPostIdLikePost({
     path: { post_id: postId },
   });
-  return { data, error, status: response.status };
+  return { data, error };
 };
 
 export const unlikePost = async (postId: string) => {
-  const { data, error, response } = await unlikePostApiV1PostsPostIdLikeDelete({
+  const { data, error } = await unlikePostApiV1PostsPostIdLikeDelete({
     path: { post_id: postId },
   });
-  return { data, error, status: response.status };
+  return { data, error };
 };
 
 export const getPostLikers = async (postId: string, limit?: number, offset?: number) => {
@@ -284,18 +284,18 @@ export const getPostLikers = async (postId: string, limit?: number, offset?: num
 // ========================================
 
 export const addMediaToPost = async (postId: string, body: PostMediaCreate) => {
-  const { data, error, response } = await addMediaToPostApiV1PostsPostIdMediaPost({
+  const { data, error } = await addMediaToPostApiV1PostsPostIdMediaPost({
     path: { post_id: postId },
     body,
   });
-  return { data, error, status: response.status };
+  return { data, error };
 };
 
 export const deleteMediaFromPost = async (postId: string, mediaId: string) => {
-  const { data, error, response } = await deleteMediaFromPostApiV1PostsPostIdMediaMediaIdDelete({
+  const { data, error } = await deleteMediaFromPostApiV1PostsPostIdMediaMediaIdDelete({
     path: { post_id: postId, media_id: mediaId },
   });
-  return { data, error, status: response.status };
+  return { data, error };
 };
 
 // ========================================
@@ -329,25 +329,25 @@ export const getComment = async (commentId: string) => {
 };
 
 export const createComment = async (body: CommentCreate) => {
-  const { data, error, response } = await createCommentApiV1CommentsPost({
+  const { data, error } = await createCommentApiV1CommentsPost({
     body,
   });
-  return { data, error, status: response.status };
+  return { data, error };
 };
 
 export const updateComment = async (commentId: string, body: CommentUpdate) => {
-  const { data, error, response } = await updateCommentApiV1CommentsCommentIdPatch({
+  const { data, error } = await updateCommentApiV1CommentsCommentIdPatch({
     path: { comment_id: commentId },
     body,
   });
-  return { data, error, status: response.status };
+  return { data, error };
 };
 
 export const deleteComment = async (commentId: string) => {
-  const { data, error, response } = await deleteCommentApiV1CommentsCommentIdDelete({
+  const { data, error } = await deleteCommentApiV1CommentsCommentIdDelete({
     path: { comment_id: commentId },
   });
-  return { data, error, status: response.status };
+  return { data, error };
 };
 
 export const getCommentReplies = async (commentId: string, limit?: number) => {
@@ -368,10 +368,10 @@ export const getMediaConfig = async () => {
 };
 
 export const generatePresignedUrl = async (body: PresignedUrlRequest) => {
-  const { data, error, response } = await generatePresignedUrlApiV1MediaPresignedUrlPost({
+  const { data, error } = await generatePresignedUrlApiV1MediaPresignedUrlPost({
     body,
   });
-  return { data, error, status: response.status };
+  return { data, error };
 };
 
 // ========================================
