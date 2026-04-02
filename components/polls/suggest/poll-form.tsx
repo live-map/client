@@ -12,7 +12,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { OptionFields } from "./option-fields";
 import { createPoll } from "@/app/actions/polls";
-import { useAuthAction } from "@/lib/hooks/use-auth-action";
 import {
   createPollSchema,
   interactionTypes,
@@ -56,7 +55,6 @@ const TYPE_LABELS: Record<InteractionType, { label: string; icon: string }> = {
 
 export function PollForm() {
   const router = useRouter();
-  const { requireAuth, isAuthError } = useAuthAction();
 
   const form = useForm<CreatePollFormValues>({
     resolver: zodResolver(createPollSchema),
@@ -88,12 +86,9 @@ export function PollForm() {
   }, [selectedType, form]);
 
   const onSubmit = async (data: CreatePollFormValues) => {
-    if (!requireAuth("여론조사를 제안하려면 로그인이 필요합니다")) return;
-
     const result = await createPoll(data);
 
     if (result.error) {
-      if (isAuthError(result, "여론조사를 제안하려면 로그인이 필요합니다")) return;
       toast.error(result.error);
     } else {
       toast.success("AI 리서치 에이전트가 분석을 시작합니다");

@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { ArrowLeft, Eye, ThumbsUp, Trash2 } from "lucide-react";
 import { useAuth } from "@/lib/auth/auth-context";
 import { useLoginModal } from "@/components/auth/login-modal";
-import { useAuthAction } from "@/lib/hooks/use-auth-action";
 import { toast } from "sonner";
 
 import { likePost, unlikePost, deletePost } from "@/lib/api";
@@ -32,7 +31,6 @@ export function PostDetailClient({ post, initialComments }: PostDetailClientProp
   const router = useRouter();
   const { user: authUser } = useAuth();
   const { openLoginModal } = useLoginModal();
-  const { isAuthError } = useAuthAction();
   const [isLiked, setIsLiked] = useState(post.is_liked ?? false);
   const [likeCount, setLikeCount] = useState(post.like_count ?? 0);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -41,14 +39,8 @@ export function PostDetailClient({ post, initialComments }: PostDetailClientProp
 
   const handleDelete = async () => {
     setIsDeleting(true);
-    const { error, status } = await deletePost(post.id);
+    const { error } = await deletePost(post.id);
     if (error) {
-      if (
-        isAuthError({ error: String(error), status }, "게시글을 삭제하려면 로그인이 필요합니다")
-      ) {
-        setIsDeleting(false);
-        return;
-      }
       toast.error("게시글 삭제에 실패했습니다.");
       setIsDeleting(false);
     } else {
@@ -70,13 +62,12 @@ export function PostDetailClient({ post, initialComments }: PostDetailClientProp
     setIsLiked(!prevLiked);
     setLikeCount(prevLiked ? prevCount - 1 : prevCount + 1);
 
-    const { error, status } = prevLiked ? await unlikePost(post.id) : await likePost(post.id);
+    const { error } = prevLiked ? await unlikePost(post.id) : await likePost(post.id);
 
     if (error) {
       // Revert on error
       setIsLiked(prevLiked);
       setLikeCount(prevCount);
-      if (isAuthError({ error: String(error), status }, "추천하려면 로그인이 필요합니다")) return;
       toast.error("오류가 발생했습니다");
     }
   };
